@@ -1,118 +1,74 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
+import 'react-native-gesture-handler';
+import React, { useEffect } from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator, TransitionPresets } from '@react-navigation/stack';
+import { Provider as PaperProvider } from 'react-native-paper';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { enableScreens } from 'react-native-screens';
+import HitchhikeRequestScreen from '././src/screens/HitchhikeRequestScreen';
 
-import React from 'react';
-import type {PropsWithChildren} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+enableScreens();
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+const Stack = createStackNavigator();
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
 
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+import HomeScreen from './src/screens/HomeScreen';
+import RideShareScreen from './src/screens/RideShareScreen';
+import RidesScreen from './src/screens/RidesScreen';
+import AirbnbShareScreen from './src/screens/AirbnbShareScreen';
+import ScheduleScreen from './src/screens/ScheduleScreen';
+import ItemShareScreen from './src/screens/ItemShareScreen';
+import ExperienceShareScreen from './src/screens/ExperienceShareScreen';
+import AuthScreen from './src/screens/AuthScreen';
+import SharingScreen from './src/screens/SharingScreen';
+import ProfileScreen from './src/screens/ProfileScreen';
+import MessengerScreen from './src/screens/MessengerScreen';
+import { updateUserLocation } from '././src/services/location';
+import { listenForHitchhikingRequests } from '././src/services/hitchhiking';
+// import EditProfileScreen from './src/screens/EditProfileScreen';
+
+const App = () => {
+  useEffect(() => {
+    const locationInterval = setInterval(() => {
+      updateUserLocation();
+    }, 60000); // Update location every 60 seconds
+  
+    listenForHitchhikingRequests();
+  
+    return () => clearInterval(locationInterval);
+  }, []);
+  
   return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
+    <PaperProvider>
+      <SafeAreaProvider>
+        <NavigationContainer>
+          <Stack.Navigator initialRouteName="Auth">
+            <Stack.Screen name="Auth" component={AuthScreen} />
+            <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="HitchhikeRequest" component={HitchhikeRequestScreen} options={{ title: 'Request a Hitchhike' }} />
+            <Stack.Screen name="RideShare" component={RideShareScreen} options={{ title: 'Share a Ride' }} />
+            <Stack.Screen name="Sharing" component={SharingScreen} />
+            <Stack.Screen name="AirbnbShare" component={AirbnbShareScreen} />
+            <Stack.Screen name="ItemShare" component={ItemShareScreen} />
+            <Stack.Screen name="ExperienceShare" component={ExperienceShareScreen} />
+            <Stack.Screen name="Schedule" component={ScheduleScreen} />
+            <Stack.Screen 
+              name="Profile" 
+              component={ProfileScreen} 
+              options={{
+                headerShown: false,
+                gestureEnabled: true,
+                cardOverlayEnabled: true,
+                ...TransitionPresets.ModalSlideFromBottomIOS,
+              }}
+            />
+            {/* <Stack.Screen name="EditProfile" component={EditProfileScreen} /> */}
+            <Stack.Screen name="Messenger" component={MessengerScreen} options={{ title: 'Messenger' }} />
+          </Stack.Navigator>
+        </NavigationContainer>
+      </SafeAreaProvider>
+    </PaperProvider>
   );
-}
-
-function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
-
-  return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
-}
-
-const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-});
+};
 
 export default App;

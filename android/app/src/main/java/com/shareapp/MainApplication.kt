@@ -1,4 +1,4 @@
-package com.shareapp
+package com.share
 
 import android.app.Application
 import com.facebook.react.PackageList
