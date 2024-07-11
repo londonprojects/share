@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { View, FlatList, StyleSheet, Image, Alert } from 'react-native';
 import { Text, Card, Searchbar, IconButton, Appbar } from 'react-native-paper';
 import { firestore, auth } from '../services/firebase';
+import axios from 'axios';
+
+const UNSPLASH_ACCESS_KEY = '9tdu1sdQdRJV4zwTDqLsSxT9-yJbuud6msoTTMAu_Lg'; // Replace with your Unsplash Access Key
 
 function RidesScreen({ navigation }) {
   const [rides, setRides] = useState([]);
@@ -22,6 +25,34 @@ function RidesScreen({ navigation }) {
       unsubscribeRides();
     };
   }, []);
+
+  const fetchBackgroundImage = async (city) => {
+    try {
+      const response = await axios.get(`https://api.unsplash.com/photos/random`, {
+        params: { query: city, client_id: UNSPLASH_ACCESS_KEY },
+      });
+      return response.data.urls.regular;
+    } catch (error) {
+      console.error('Error fetching image from Unsplash:', error);
+      return null;
+    }
+  };
+
+  useEffect(() => {
+    const fetchImages = async () => {
+      const updatedRides = await Promise.all(
+        rides.map(async (ride) => {
+          const imageUrl = await fetchBackgroundImage(ride.destination);
+          return { ...ride, imageUrl };
+        })
+      );
+      setFilteredRides(updatedRides);
+    };
+
+    if (rides.length > 0) {
+      fetchImages();
+    }
+  }, [rides]);
 
   const handleSearch = (query) => {
     setQuery(query);
@@ -61,6 +92,7 @@ function RidesScreen({ navigation }) {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <Card style={styles.card}>
+            {item.imageUrl && <Card.Cover source={{ uri: item.imageUrl }} style={styles.cardImage} />}
             <Card.Content>
               <View style={styles.rideHeader}>
                 {item.userPhoto && <Image source={{ uri: item.userPhoto }} style={styles.userPhoto} />}
@@ -98,6 +130,9 @@ const styles = StyleSheet.create({
   card: {
     marginVertical: 8,
     marginHorizontal: 16,
+  },
+  cardImage: {
+    height: 200,
   },
   rideHeader: {
     flexDirection: 'row',

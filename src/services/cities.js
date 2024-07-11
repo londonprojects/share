@@ -2,7 +2,7 @@
 export const cities = [
   { label: 'New York (JFK)', value: 'John F. Kennedy International Airport' },
   { label: 'New York (EWR)', value: 'Newark Liberty International Airport' },
-  { label: 'Los Angeles (LAX)', value: 'Los Angeles International Airport' },
+  { label: 'Los Angeles (LAX)', value: 'Los Angeles' },
   { label: 'Chicago (ORD)', value: 'O Hare International Airport' },
   { label: 'Houston (IAH)', value: 'George Bush Intercontinental Airport' },
   { label: 'Phoenix (PHX)', value: 'Phoenix Sky Harbor International Airport' },

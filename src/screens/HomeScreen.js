@@ -97,7 +97,7 @@ const HomeScreen = ({ navigation }) => {
           <Appbar.Action icon="account" onPress={() => navigation.navigate('Profile')} />
         </Appbar.Header>
         <ScrollView contentContainerStyle={styles.scrollView}>
-          <Text style={styles.title}>Welcome to ShareApp</Text>
+          {/* <Text style={styles.title}>Welcome to ShareApp</Text> */}
           <Text style={styles.subtitle}>Latest Listings</Text>
           
           {latestRide && (
@@ -118,7 +118,10 @@ const HomeScreen = ({ navigation }) => {
                 <Text style={styles.cardDate}>Date: {formatDate(latestRide.date)}</Text>
               </Card.Content>
               <Card.Actions>
-                <Button onPress={() => navigation.navigate('RidesScreen')} mode="text">View All Rides</Button>
+                {/* <Button onPress={() => navigation.navigate('RidesScreen')} mode="text">View All Rides</Button> */}
+                <Button mode="text" onPress={() => navigation.navigate('RidesScreen')}>
+                  View All Rides
+                </Button>
                 {latestRide.userId !== auth.currentUser?.uid && (
                   <IconButton icon="thumb-up" onPress={() => notifyOwner(latestRide.userId, latestRide.id)} />
                 )}

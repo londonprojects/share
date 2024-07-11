@@ -5,12 +5,11 @@ import { createStackNavigator, TransitionPresets } from '@react-navigation/stack
 import { Provider as PaperProvider, DefaultTheme } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { enableScreens } from 'react-native-screens';
-import HitchhikeRequestScreen from '././src/screens/HitchhikeRequestScreen';
+import HitchhikeRequestScreen from './src/screens/HitchhikeRequestScreen';
 
 enableScreens();
 
 const Stack = createStackNavigator();
-
 
 import HomeScreen from './src/screens/HomeScreen';
 import RideShareScreen from './src/screens/RideShareScreen';
@@ -25,9 +24,9 @@ import ProfileScreen from './src/screens/ProfileScreen';
 import MessengerScreen from './src/screens/MessengerScreen';
 import FlightItineraryScreen from './src/screens/FlightItineraryScreen';
 import MatchingItinerariesScreen from './src/screens/MatchingItinerariesScreen';
-import { updateUserLocation } from '././src/services/location';
-import { listenForHitchhikingRequests } from '././src/services/hitchhiking';
-// import EditProfileScreen from './src/screens/EditProfileScreen';
+import EditProfileScreen from './src/screens/EditProfileScreen';
+import { updateUserLocation } from './src/services/location';
+import { listenForHitchhikingRequests } from './src/services/hitchhiking';
 
 const theme = {
   ...DefaultTheme,
@@ -79,8 +78,9 @@ const App = () => {
                 ...TransitionPresets.ModalSlideFromBottomIOS,
               }}
             />
-            {/* <Stack.Screen name="EditProfile" component={EditProfileScreen} /> */}
+            <Stack.Screen name="EditProfile" component={EditProfileScreen} />
             <Stack.Screen name="Messenger" component={MessengerScreen} options={{ title: 'Messenger' }} />
+            <Stack.Screen name="RidesScreen" component={RidesScreen} options={{ title: 'Rides' }} />
           </Stack.Navigator>
         </NavigationContainer>
       </SafeAreaProvider>
