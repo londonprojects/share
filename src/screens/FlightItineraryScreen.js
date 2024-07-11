@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, Alert } from 'react-native';
-import { Text, TextInput, Button } from 'react-native-paper';
+import { Text, TextInput, Button, Menu, Provider as PaperProvider } from 'react-native-paper';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { firestore, auth } from '../services/firebase';
+import { cities } from '../services/cities'; // Adjust the path as needed
 
 const FlightItineraryScreen = ({ navigation }) => {
   const [itinerary, setItinerary] = useState({
@@ -12,6 +13,7 @@ const FlightItineraryScreen = ({ navigation }) => {
     city: '',
   });
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [menuVisible, setMenuVisible] = useState(false);
 
   const handleDateChange = (event, selectedDate) => {
     const currentDate = selectedDate || itinerary.date;
@@ -49,41 +51,57 @@ const FlightItineraryScreen = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
-      <Text variant="titleLarge" style={styles.title}>Share Your Flight Itinerary</Text>
-      <TextInput
-        label="Flight Number"
-        value={itinerary.flightNumber}
-        onChangeText={(text) => setItinerary({ ...itinerary, flightNumber: text })}
-        style={styles.input}
-      />
-      <Button mode="contained" onPress={() => setShowDatePicker(true)} style={styles.button}>
-        Select Date
-      </Button>
-      {showDatePicker && (
-        <DateTimePicker
-          value={itinerary.date}
-          mode="date"
-          display="default"
-          onChange={handleDateChange}
+    <PaperProvider>
+      <View style={styles.container}>
+        <Text variant="titleLarge" style={styles.title}>Share Your Flight Itinerary</Text>
+        <TextInput
+          label="Flight Number"
+          value={itinerary.flightNumber}
+          onChangeText={(text) => setItinerary({ ...itinerary, flightNumber: text })}
+          style={styles.input}
         />
-      )}
-      <TextInput
-        label="Arrival Time"
-        value={itinerary.arrivalTime}
-        onChangeText={(text) => setItinerary({ ...itinerary, arrivalTime: text })}
-        style={styles.input}
-      />
-      <TextInput
-        label="City"
-        value={itinerary.city}
-        onChangeText={(text) => setItinerary({ ...itinerary, city: text })}
-        style={styles.input}
-      />
-      <Button mode="contained" onPress={handleShare} style={styles.button}>
-        Share Itinerary
-      </Button>
-    </View>
+        <Button mode="contained" onPress={() => setShowDatePicker(true)} style={styles.button}>
+          Select Date
+        </Button>
+        {showDatePicker && (
+          <DateTimePicker
+            value={itinerary.date}
+            mode="date"
+            display="default"
+            onChange={handleDateChange}
+          />
+        )}
+        <TextInput
+          label="Arrival Time"
+          value={itinerary.arrivalTime}
+          onChangeText={(text) => setItinerary({ ...itinerary, arrivalTime: text })}
+          style={styles.input}
+        />
+        <Menu
+          visible={menuVisible}
+          onDismiss={() => setMenuVisible(false)}
+          anchor={
+            <Button mode="outlined" onPress={() => setMenuVisible(true)} style={styles.input}>
+              {itinerary.city || 'Select City'}
+            </Button>
+          }
+        >
+          {cities.map((city) => (
+            <Menu.Item
+              key={city.value}
+              onPress={() => {
+                setItinerary({ ...itinerary, city: city.label });
+                setMenuVisible(false);
+              }}
+              title={city.label}
+            />
+          ))}
+        </Menu>
+        <Button mode="contained" onPress={handleShare} style={styles.button}>
+          Share Itinerary
+        </Button>
+      </View>
+    </PaperProvider>
   );
 };
 

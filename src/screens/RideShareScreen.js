@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { View, StyleSheet, Alert, Platform } from 'react-native';
 import { Text, TextInput, Button, useTheme, Avatar } from 'react-native-paper';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import Slider from '@react-native-community/slider';
 import { firestore, auth } from '../services/firebase'; // Adjust the path as needed
 
 const RideShareScreen = ({ navigation }) => {
-  const [rideDetails, setRideDetails] = useState({ destination: '', date: new Date(), price: '', numSpaces: '', timeLimited: false });
+  const [rideDetails, setRideDetails] = useState({ destination: '', date: new Date(), price: 0, numSpaces: 1, timeLimited: false });
   const [showDatePicker, setShowDatePicker] = useState(false);
   const { colors } = useTheme();
 
@@ -16,7 +17,7 @@ const RideShareScreen = ({ navigation }) => {
   };
 
   const handleShare = () => {
-    if (!rideDetails.destination || !rideDetails.price || !rideDetails.numSpaces) {
+    if (!rideDetails.destination || rideDetails.price <= 0 || rideDetails.numSpaces <= 0) {
       Alert.alert("Missing Information", "Please fill in all the details.");
       return;
     }
@@ -55,21 +56,23 @@ const RideShareScreen = ({ navigation }) => {
         style={styles.input}
         mode="outlined"
       />
-      <TextInput
-        label="Price"
+      <Text style={styles.label}>Price: ${rideDetails.price}</Text>
+      <Slider
         value={rideDetails.price}
-        onChangeText={(text) => setRideDetails({ ...rideDetails, price: text })}
-        style={styles.input}
-        mode="outlined"
-        keyboardType="numeric"
+        onValueChange={(value) => setRideDetails({ ...rideDetails, price: value })}
+        minimumValue={0}
+        maximumValue={100}
+        step={1}
+        style={styles.slider}
       />
-      <TextInput
-        label="Number of Spaces"
+      <Text style={styles.label}>Number of Spaces: {rideDetails.numSpaces}</Text>
+      <Slider
         value={rideDetails.numSpaces}
-        onChangeText={(text) => setRideDetails({ ...rideDetails, numSpaces: text })}
-        style={styles.input}
-        mode="outlined"
-        keyboardType="numeric"
+        onValueChange={(value) => setRideDetails({ ...rideDetails, numSpaces: value })}
+        minimumValue={1}
+        maximumValue={10}
+        step={1}
+        style={styles.slider}
       />
       <Button mode="outlined" onPress={() => setShowDatePicker(true)} style={styles.button}>
         Select Date
@@ -108,6 +111,16 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   input: {
+    width: '80%',
+    marginBottom: 16,
+  },
+  label: {
+    width: '80%',
+    marginBottom: 8,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  slider: {
     width: '80%',
     marginBottom: 16,
   },
