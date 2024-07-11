@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, FlatList, StyleSheet, Image, Alert } from 'react-native';
-import { Text, Card, Searchbar, IconButton, Appbar } from 'react-native-paper';
+import { View, FlatList, StyleSheet, Image, Alert, ScrollView } from 'react-native';
+import { Text, Card, Searchbar, IconButton, Appbar, Avatar } from 'react-native-paper';
 import { firestore, auth } from '../services/firebase';
 import axios from 'axios';
 
@@ -10,6 +10,7 @@ function RidesScreen({ navigation }) {
   const [rides, setRides] = useState([]);
   const [filteredRides, setFilteredRides] = useState([]);
   const [query, setQuery] = useState('');
+  const [recentUsers, setRecentUsers] = useState([]);
 
   useEffect(() => {
     const unsubscribeRides = firestore.collection('rides').onSnapshot(snapshot => {
@@ -20,6 +21,14 @@ function RidesScreen({ navigation }) {
       setRides(ridesList);
       setFilteredRides(ridesList);
     });
+
+    const fetchRecentUsers = async () => {
+      const usersSnapshot = await firestore.collection('users').orderBy('lastPosted', 'desc').limit(5).get();
+      const usersList = usersSnapshot.docs.map(doc => doc.data());
+      setRecentUsers(usersList);
+    };
+
+    fetchRecentUsers();
 
     return () => {
       unsubscribeRides();
@@ -81,6 +90,13 @@ function RidesScreen({ navigation }) {
         <Appbar.BackAction onPress={() => navigation.goBack()} />
         <Appbar.Content title="Rides" />
       </Appbar.Header>
+      <View style={styles.avatarContainer}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          {recentUsers.map((user, index) => (
+            <Avatar.Image key={index} size={50} source={{ uri: user.photoURL }} style={styles.avatar} />
+          ))}
+        </ScrollView>
+      </View>
       <Searchbar
         placeholder="Search"
         onChangeText={handleSearch}
@@ -96,6 +112,9 @@ function RidesScreen({ navigation }) {
             <Card.Content>
               <View style={styles.rideHeader}>
                 {item.userPhoto && <Image source={{ uri: item.userPhoto }} style={styles.userPhoto} />}
+                {item.userId === auth.currentUser?.uid && auth.currentUser?.photoURL && (
+                  <Image source={{ uri: auth.currentUser.photoURL }} style={styles.userPhoto} />
+                )}
                 <View>
                   <Text style={styles.cardTitle}>{item.destination}</Text>
                   <Text style={styles.userName}>{item.userName}</Text>
@@ -126,6 +145,14 @@ const styles = StyleSheet.create({
   },
   searchbar: {
     margin: 16,
+  },
+  avatarContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
+  avatar: {
+    marginHorizontal: 5,
   },
   card: {
     marginVertical: 8,

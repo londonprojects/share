@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView, Image, Alert, TextInput } from 'react-native';
-import { Text, Card, Button, Appbar, IconButton, Provider as PaperProvider, Menu, List, FAB, Portal } from 'react-native-paper';
+import { View, StyleSheet, ScrollView, Image, Alert, TextInput, TouchableOpacity } from 'react-native';
+import { Text, Card, Button, Appbar, IconButton, Provider as PaperProvider, Menu, List, FAB, Portal, Avatar } from 'react-native-paper';
 import { firestore, auth } from '../services/firebase';
 import { cities } from '../services/cities'; // Adjust the path as needed
 import { getRandomImage } from '../services/unsplash'; // Import the unsplash service
@@ -20,19 +20,37 @@ const HomeScreen = ({ navigation }) => {
   const [latestAirbnb, setLatestAirbnb] = useState(null);
   const [latestItem, setLatestItem] = useState(null);
   const [latestExperience, setLatestExperience] = useState(null);
+  const [recentUsers, setRecentUsers] = useState([]);
   const [visible, setVisible] = useState(false);
   const [city, setCity] = useState('');
   const [fabOpen, setFabOpen] = useState(false);
+  const [userProfilePhoto, setUserProfilePhoto] = useState(null); // Add state for user profile photo
 
   const openMenu = () => setVisible(true);
   const closeMenu = () => setVisible(false);
 
   useEffect(() => {
+    const fetchUserProfile = async () => {
+      const user = auth.currentUser;
+      if (user) {
+        setUserProfilePhoto(user.photoURL); // Set the user's profile photo URL
+      }
+    };
+
     const fetchImageAndSetState = async (doc, setState, query) => {
       const data = { id: doc.id, ...doc.data() };
       data.imageUrl = await getRandomImage(query);
       setState(data);
     };
+
+    const fetchRecentUsers = async () => {
+      const usersSnapshot = await firestore.collection('users').orderBy('lastPosted', 'desc').limit(5).get();
+      const usersList = usersSnapshot.docs.map(doc => doc.data());
+      console.log('Recent Users:', usersList); // Debugging line
+      setRecentUsers(usersList);
+    };
+
+    fetchUserProfile();
 
     const unsubscribeRides = firestore.collection('rides').orderBy('dateListed', 'desc').limit(1).onSnapshot(snapshot => {
       const ride = snapshot.docs[0];
@@ -53,6 +71,8 @@ const HomeScreen = ({ navigation }) => {
       const experience = snapshot.docs[0];
       if (experience) fetchImageAndSetState(experience, setLatestExperience, experience.data().name);
     });
+
+    fetchRecentUsers();
 
     return () => {
       unsubscribeRides();
@@ -94,10 +114,22 @@ const HomeScreen = ({ navigation }) => {
       <View style={styles.container}>
         <Appbar.Header style={styles.appbar}>
           <Appbar.Content title="ShareApp" />
-          <Appbar.Action icon="account" onPress={() => navigation.navigate('Profile')} />
+          {userProfilePhoto ? (
+            <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
+              <Image source={{ uri: userProfilePhoto }} style={styles.profilePhoto} />
+            </TouchableOpacity>
+          ) : (
+            <Appbar.Action icon="account" onPress={() => navigation.navigate('Profile')} />
+          )}
         </Appbar.Header>
         <ScrollView contentContainerStyle={styles.scrollView}>
-          {/* <Text style={styles.title}>Welcome to ShareApp</Text> */}
+          <View style={styles.avatarContainer}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {recentUsers.map((user, index) => (
+                <Avatar.Image key={index} size={50} source={{ uri: user.photoURL }} style={styles.avatar} />
+              ))}
+            </ScrollView>
+          </View>
           <Text style={styles.subtitle}>Latest Listings</Text>
           
           {latestRide && (
@@ -106,6 +138,9 @@ const HomeScreen = ({ navigation }) => {
               <Card.Content>
                 <View style={styles.cardHeader}>
                   {latestRide.userPhoto && <Image source={{ uri: latestRide.userPhoto }} style={styles.userPhoto} />}
+                  {latestRide.userId === auth.currentUser?.uid && userProfilePhoto && (
+                    <Image source={{ uri: userProfilePhoto }} style={styles.userPhoto} />
+                  )}
                   <View>
                     <Text style={styles.cardTitle}>{latestRide.destination}</Text>
                     <Text style={styles.userName}>{latestRide.userName}</Text>
@@ -118,7 +153,6 @@ const HomeScreen = ({ navigation }) => {
                 <Text style={styles.cardDate}>Date: {formatDate(latestRide.date)}</Text>
               </Card.Content>
               <Card.Actions>
-                {/* <Button onPress={() => navigation.navigate('RidesScreen')} mode="text">View All Rides</Button> */}
                 <Button mode="text" onPress={() => navigation.navigate('RidesScreen')}>
                   View All Rides
                 </Button>
@@ -135,6 +169,9 @@ const HomeScreen = ({ navigation }) => {
               <Card.Content>
                 <View style={styles.cardHeader}>
                   {latestAirbnb.userPhoto && <Image source={{ uri: latestAirbnb.userPhoto }} style={styles.userPhoto} />}
+                  {latestAirbnb.userId === auth.currentUser?.uid && userProfilePhoto && (
+                    <Image source={{ uri: userProfilePhoto }} style={styles.userPhoto} />
+                  )}
                   <View>
                     <Text style={styles.cardTitle}>{latestAirbnb.location}</Text>
                     <Text style={styles.userName}>{latestAirbnb.userName}</Text>
@@ -162,6 +199,9 @@ const HomeScreen = ({ navigation }) => {
               <Card.Content>
                 <View style={styles.cardHeader}>
                   {latestItem.userPhoto && <Image source={{ uri: latestItem.userPhoto }} style={styles.userPhoto} />}
+                  {latestItem.userId === auth.currentUser?.uid && userProfilePhoto && (
+                    <Image source={{ uri: userProfilePhoto }} style={styles.userPhoto} />
+                  )}
                   <View>
                     <Text style={styles.cardTitle}>{latestItem.name}</Text>
                     <Text style={styles.userName}>{latestItem.userName}</Text>
@@ -186,6 +226,9 @@ const HomeScreen = ({ navigation }) => {
               <Card.Content>
                 <View style={styles.cardHeader}>
                   {latestExperience.userPhoto && <Image source={{ uri: latestExperience.userPhoto }} style={styles.userPhoto} />}
+                  {latestExperience.userId === auth.currentUser?.uid && userProfilePhoto && (
+                    <Image source={{ uri: userProfilePhoto }} style={styles.userPhoto} />
+                  )}
                   <View>
                     <Text style={styles.cardTitle}>{latestExperience.name}</Text>
                     <Text style={styles.userName}>{latestExperience.userName}</Text>
@@ -256,6 +299,20 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     paddingVertical: 20,
+  },
+  avatarContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
+  avatar: {
+    marginHorizontal: 5,
+  },
+  profilePhoto: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 8,
   },
   title: {
     fontSize: 24,
