@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, ScrollView, Image, Alert, TextInput } from 'react-native';
-import { Text, Card, Button, Appbar, IconButton, Provider as PaperProvider, Menu, List, FAB, Portal  } from 'react-native-paper';
+import { Text, Card, Button, Appbar, IconButton, Provider as PaperProvider, Menu, List, FAB, Portal } from 'react-native-paper';
 import { firestore, auth } from '../services/firebase';
 import { cities } from '../services/cities'; // Adjust the path as needed
 import { DefaultTheme } from 'react-native-paper';
@@ -87,6 +87,13 @@ const HomeScreen = ({ navigation }) => {
     }
   };
 
+  const renderAmenities = (amenities) => {
+    return Object.keys(amenities)
+      .filter(key => amenities[key])
+      .map(key => key.charAt(0).toUpperCase() + key.slice(1))
+      .join(', ');
+  };
+
   return (
     <PaperProvider theme={theme}>
       <View style={styles.container}>
@@ -138,7 +145,7 @@ const HomeScreen = ({ navigation }) => {
                 </View>
                 <Text style={styles.cardDetails}>Price: ${latestAirbnb.price}</Text>
                 <Text style={styles.cardDetails}>Number of Rooms: {latestAirbnb.numRooms}</Text>
-                <Text style={styles.cardDetails}>Amenities: {latestAirbnb.amenities}</Text>
+                <Text style={styles.cardDetails}>Amenities: {renderAmenities(latestAirbnb.amenities)}</Text>
                 <Text style={styles.cardDetails}>Description: {latestAirbnb.description}</Text>
                 <Text style={styles.cardDate}>Date: {formatDate(latestAirbnb.date)}</Text>
               </Card.Content>
@@ -223,21 +230,19 @@ const HomeScreen = ({ navigation }) => {
             </Button>
           </View>
         </ScrollView>
-         <Portal>
-          <FAB.Group
-            open={fabOpen}
-            icon={fabOpen ? 'close' : 'plus'}
-            actions={[
-              { icon: 'car', label: 'Share a Ride', onPress: () => navigation.navigate('RideShare') },
-              { icon: 'home', label: 'Share an Airbnb', onPress: () => navigation.navigate('AirbnbShare') },
-              { icon: 'gift', label: 'Share an Item', onPress: () => navigation.navigate('ItemShare') },
-              { icon: 'run', label: 'Share an Experience', onPress: () => navigation.navigate('ExperienceShare') },
-              { icon: 'airplane', label: 'Share Your Flight Itinerary', onPress: () => navigation.navigate('FlightItinerary') },
-            ]}
-            onStateChange={({ open }) => setFabOpen(open)}
-            style={styles.fab}
-          />
-        </Portal>
+        <FAB.Group
+          open={fabOpen}
+          icon={fabOpen ? 'close' : 'plus'}
+          actions={[
+            { icon: 'car', label: 'Share a Ride', onPress: () => navigation.navigate('RideShare') },
+            { icon: 'home', label: 'Share an Airbnb', onPress: () => navigation.navigate('AirbnbShare') },
+            { icon: 'gift', label: 'Share an Item', onPress: () => navigation.navigate('ItemShare') },
+            { icon: 'run', label: 'Share an Experience', onPress: () => navigation.navigate('ExperienceShare') },
+            { icon: 'airplane', label: 'Share Your Flight Itinerary', onPress: () => navigation.navigate('FlightItinerary') },
+          ]}
+          onStateChange={({ open }) => setFabOpen(open)}
+          style={styles.fab}
+        />
       </View>
     </PaperProvider>
   );
