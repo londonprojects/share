@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Alert } from 'react-native';
-import { Button, Text, TextInput, useTheme } from 'react-native-paper';
+import { View, StyleSheet, Alert, Text } from 'react-native';
+import { Button, TextInput, useTheme } from 'react-native-paper';
+import Slider from '@react-native-community/slider';
 import { firestore, auth } from '../services/firebase';
 
 function ExperienceShareScreen({ navigation }) {
-  const [experienceDetails, setExperienceDetails] = useState({ name: '', description: '', price: '' });
+  const [experienceDetails, setExperienceDetails] = useState({ name: '', description: '', price: 0 });
   const { colors } = useTheme();
 
   const handleShare = () => {
@@ -48,12 +49,16 @@ function ExperienceShareScreen({ navigation }) {
         multiline
         numberOfLines={4}
       />
-      <TextInput
-        label="Price"
+      <Text style={styles.sliderLabel}>Price: ${experienceDetails.price}</Text>
+      <Slider
+        style={styles.slider}
+        minimumValue={0}
+        maximumValue={1000}
+        step={1}
         value={experienceDetails.price}
-        onChangeText={(text) => setExperienceDetails({ ...experienceDetails, price: text })}
-        keyboardType="numeric"
-        style={styles.input}
+        onValueChange={(value) => setExperienceDetails({ ...experienceDetails, price: value })}
+        minimumTrackTintColor={colors.primary}
+        maximumTrackTintColor="#000000"
       />
       <Button mode="contained" onPress={handleShare} style={styles.button}>
         Share Experience
@@ -74,6 +79,16 @@ const styles = StyleSheet.create({
   },
   input: {
     width: '80%',
+    marginBottom: 16,
+  },
+  sliderLabel: {
+    width: '80%',
+    textAlign: 'left',
+    marginBottom: 8,
+  },
+  slider: {
+    width: '80%',
+    height: 40,
     marginBottom: 16,
   },
   button: {

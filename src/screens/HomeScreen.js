@@ -3,6 +3,7 @@ import { View, StyleSheet, ScrollView, Image, Alert, TextInput } from 'react-nat
 import { Text, Card, Button, Appbar, IconButton, Provider as PaperProvider, Menu, List, FAB, Portal } from 'react-native-paper';
 import { firestore, auth } from '../services/firebase';
 import { cities } from '../services/cities'; // Adjust the path as needed
+import { getRandomImage } from '../services/unsplash'; // Import the unsplash service
 import { DefaultTheme } from 'react-native-paper';
 
 const theme = {
@@ -27,36 +28,30 @@ const HomeScreen = ({ navigation }) => {
   const closeMenu = () => setVisible(false);
 
   useEffect(() => {
+    const fetchImageAndSetState = async (doc, setState, query) => {
+      const data = { id: doc.id, ...doc.data() };
+      data.imageUrl = await getRandomImage(query);
+      setState(data);
+    };
+
     const unsubscribeRides = firestore.collection('rides').orderBy('dateListed', 'desc').limit(1).onSnapshot(snapshot => {
-      const ride = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }))[0];
-      setLatestRide(ride);
+      const ride = snapshot.docs[0];
+      if (ride) fetchImageAndSetState(ride, setLatestRide, ride.data().destination);
     });
 
     const unsubscribeAirbnbs = firestore.collection('airbnbs').orderBy('dateListed', 'desc').limit(1).onSnapshot(snapshot => {
-      const airbnb = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }))[0];
-      setLatestAirbnb(airbnb);
+      const airbnb = snapshot.docs[0];
+      if (airbnb) fetchImageAndSetState(airbnb, setLatestAirbnb, airbnb.data().location);
     });
 
     const unsubscribeItems = firestore.collection('items').orderBy('dateListed', 'desc').limit(1).onSnapshot(snapshot => {
-      const item = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }))[0];
-      setLatestItem(item);
+      const item = snapshot.docs[0];
+      if (item) fetchImageAndSetState(item, setLatestItem, item.data().name);
     });
 
     const unsubscribeExperiences = firestore.collection('experiences').orderBy('dateListed', 'desc').limit(1).onSnapshot(snapshot => {
-      const experience = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }))[0];
-      setLatestExperience(experience);
+      const experience = snapshot.docs[0];
+      if (experience) fetchImageAndSetState(experience, setLatestExperience, experience.data().name);
     });
 
     return () => {
