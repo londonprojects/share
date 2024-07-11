@@ -2,7 +2,7 @@ import 'react-native-gesture-handler';
 import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator, TransitionPresets } from '@react-navigation/stack';
-import { Provider as PaperProvider } from 'react-native-paper';
+import { Provider as PaperProvider, DefaultTheme } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { enableScreens } from 'react-native-screens';
 import HitchhikeRequestScreen from '././src/screens/HitchhikeRequestScreen';
@@ -23,9 +23,24 @@ import AuthScreen from './src/screens/AuthScreen';
 import SharingScreen from './src/screens/SharingScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import MessengerScreen from './src/screens/MessengerScreen';
+import FlightItineraryScreen from './src/screens/FlightItineraryScreen';
+import MatchingItinerariesScreen from './src/screens/MatchingItinerariesScreen';
 import { updateUserLocation } from '././src/services/location';
 import { listenForHitchhikingRequests } from '././src/services/hitchhiking';
 // import EditProfileScreen from './src/screens/EditProfileScreen';
+
+const theme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    primary: '#00bcd4',
+    accent: '#00bcd4',
+    background: '#e0f7fa',
+    surface: '#ffffff',
+    text: '#000000',
+    placeholder: '#000000',
+  },
+};
 
 const App = () => {
   useEffect(() => {
@@ -39,12 +54,14 @@ const App = () => {
   }, []);
   
   return (
-    <PaperProvider>
+    <PaperProvider theme={theme}>
       <SafeAreaProvider>
         <NavigationContainer>
           <Stack.Navigator initialRouteName="Auth">
             <Stack.Screen name="Auth" component={AuthScreen} />
             <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="FlightItinerary" component={FlightItineraryScreen} />
+            <Stack.Screen name="MatchingItineraries" component={MatchingItinerariesScreen} />
             <Stack.Screen name="HitchhikeRequest" component={HitchhikeRequestScreen} options={{ title: 'Request a Hitchhike' }} />
             <Stack.Screen name="RideShare" component={RideShareScreen} options={{ title: 'Share a Ride' }} />
             <Stack.Screen name="Sharing" component={SharingScreen} />
