@@ -25,6 +25,7 @@ import MessengerScreen from './src/screens/MessengerScreen';
 import FlightItineraryScreen from './src/screens/FlightItineraryScreen';
 import MatchingItinerariesScreen from './src/screens/MatchingItinerariesScreen';
 import EditProfileScreen from './src/screens/EditProfileScreen';
+import MapScreen from './src/screens/MapScreen';
 import { updateUserLocation } from './src/services/location';
 import { listenForHitchhikingRequests } from './src/services/hitchhiking';
 import CommunityScreen from './src/screens/CommunityScreen';
@@ -33,12 +34,20 @@ const theme = {
   ...DefaultTheme,
   colors: {
     ...DefaultTheme.colors,
-    primary: '#00bcd4',
-    accent: '#00bcd4',
-    background: '#e0f7fa',
-    surface: '#ffffff',
-    text: '#000000',
-    placeholder: '#000000',
+    primary: '#00bcd4',        // Primary color
+    accent: '#00bcd4',         // Accent color
+    background: '#ffffff',     // Background color
+    surface: '#f5f5f5',        // Surface color
+    text: '#212121',           // Text color
+    disabled: '#bdbdbd',       // Disabled color
+    placeholder: '#757575',    // Placeholder color
+    backdrop: '#000000',       // Backdrop color
+    notification: '#ff80ab',   // Notification color
+    error: '#d32f2f',          // Error color
+    onPrimary: '#ffffff',      // Text color on primary color
+    onSurface: '#212121',      // Text color on surface color
+    onBackground: '#212121',   // Text color on background color
+    onError: '#ffffff',        // Text color on error color
   },
 };
 
@@ -100,8 +109,9 @@ const App = () => {
             />
             <Stack.Screen name="Community" component={CommunityScreen} />
             <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+            <Stack.Screen name="MapScreen" component={MapScreen} />
             <Stack.Screen name="Messenger" component={MessengerScreen} options={{ title: 'Messenger' }} />
-            <Stack.Screen name="RidesScreen" component={RidesScreen} options={{ title: 'Rides' }} />
+            <Stack.Screen name="RidesScreen" component={RidesScreen} options={{ headerShown: false }} />
           </Stack.Navigator>
         </NavigationContainer>
       </SafeAreaProvider>

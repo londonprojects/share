@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView, Image, Alert, TextInput, TouchableOpacity } from 'react-native';
-import { Text, Card, Button, Appbar, IconButton, Provider as PaperProvider, Menu, List, FAB, Portal, Avatar } from 'react-native-paper';
+import { View, StyleSheet, ScrollView, Image, Alert, TextInput, TouchableOpacity, Dimensions } from 'react-native';
+import { Text, Card, Button, Searchbar, Appbar, IconButton, Provider as PaperProvider, Menu, List, FAB, Portal, Avatar } from 'react-native-paper';
+import MapView, { Marker } from 'react-native-maps';
 import { firestore, auth } from '../services/firebase';
 import { cities } from '../services/cities'; // Adjust the path as needed
 import { getRandomImage } from '../services/unsplash'; // Import the unsplash service
@@ -10,8 +11,20 @@ const theme = {
   ...DefaultTheme,
   colors: {
     ...DefaultTheme.colors,
-    primary: '#00bcd4',
-    accent: '#00bcd4',
+    primary: '#00bcd4',        // Primary color
+    accent: '#00bcd4',         // Accent color
+    background: '#ffffff',     // Background color
+    surface: '#f5f5f5',        // Surface color
+    text: '#212121',           // Text color
+    disabled: '#bdbdbd',       // Disabled color
+    placeholder: '#757575',    // Placeholder color
+    backdrop: '#000000',       // Backdrop color
+    notification: '#ff80ab',   // Notification color
+    error: '#d32f2f',          // Error color
+    onPrimary: '#ffffff',      // Text color on primary color
+    onSurface: '#212121',      // Text color on surface color
+    onBackground: '#212121',   // Text color on background color
+    onError: '#ffffff',        // Text color on error color
   },
 };
 
@@ -26,6 +39,7 @@ const HomeScreen = ({ navigation }) => {
   const [visible, setVisible] = useState(false);
   const [city, setCity] = useState('');
   const [fabOpen, setFabOpen] = useState(false);
+  const [query, setQuery] = useState('');
   const [userProfilePhoto, setUserProfilePhoto] = useState(null); // Add state for user profile photo
 
   const openMenu = () => setVisible(true);
@@ -84,6 +98,27 @@ const HomeScreen = ({ navigation }) => {
     };
   }, []);
 
+  useEffect(() => {
+    // Add dummy data to recentUsers
+    const dummyUsers = [
+      { id: '1', displayName: 'John Doe', photoURL: 'https://randomuser.me/api/portraits/men/1.jpg' },
+      { id: '2', displayName: 'Jane Smith', photoURL: 'https://randomuser.me/api/portraits/women/2.jpg' },
+      { id: '3', displayName: 'Michael Brown', photoURL: 'https://randomuser.me/api/portraits/men/3.jpg' },
+      { id: '4', displayName: 'Emily White', photoURL: 'https://randomuser.me/api/portraits/women/4.jpg' },
+      { id: '5', displayName: 'Chris Johnson', photoURL: 'https://randomuser.me/api/portraits/men/5.jpg' },
+    ];
+    setRecentUsers(dummyUsers);
+  }, []);
+
+  const handleSearch = (query) => {
+    setQuery(query);
+    if (query) {
+      setFilteredRides(rides.filter(ride => ride.destination.toLowerCase().includes(query.toLowerCase())));
+    } else {
+      setFilteredRides(rides);
+    }
+  };
+
   const formatDate = (timestamp) => {
     if (timestamp && timestamp.seconds) {
       return new Date(timestamp.seconds * 1000).toDateString();
@@ -115,7 +150,17 @@ const HomeScreen = ({ navigation }) => {
     <PaperProvider theme={theme}>
       <View style={styles.container}>
         <Appbar.Header style={styles.appbar}>
-          <Appbar.Content title="ShareApp" />
+          <Appbar.Content title="Hello!" />
+          <IconButton
+              icon="account-group" // Replace with the desired icon name
+              size={30}
+              onPress={() => navigation.navigate('Community')}
+            />
+              <IconButton
+              icon="map" // Replace with the desired icon name
+              size={30}
+              onPress={() => navigation.navigate('MapScreen')}
+            />
           {userProfilePhoto ? (
             <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
               <Image source={{ uri: userProfilePhoto }} style={styles.profilePhoto} />
@@ -124,18 +169,59 @@ const HomeScreen = ({ navigation }) => {
             <Appbar.Action icon="account" onPress={() => navigation.navigate('Profile')} />
           )}
         </Appbar.Header>
+        <Searchbar
+            placeholder="Search"
+            onChangeText={handleSearch}
+            value={query}
+            style={styles.searchbar}
+          />
         <ScrollView contentContainerStyle={styles.scrollView}>
-          <View style={styles.avatarContainer}>
+          <Text style={styles.subtitle}>Nearby Travelers</Text>
+            <View style={styles.avatarContainer}>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               {recentUsers.map((user, index) => (
                 <Avatar.Image key={index} size={50} source={{ uri: user.photoURL || DEFAULT_IMAGE }} style={styles.avatar} />
               ))}
             </ScrollView>
           </View>
-          <Button 
-        title="Go to Community" 
-        onPress={() => navigation.navigate('Community')} 
-      />
+
+          <Text style={styles.subtitle}>Sharing around me</Text>
+
+          <MapView
+            style={styles.map}
+            initialRegion={{
+              latitude: 37.78825,
+              longitude: -122.4324,
+              latitudeDelta: 0.0922,
+              longitudeDelta: 0.0421,
+            }}
+          >
+            {/* Add markers here if necessary */}
+          </MapView>
+          <View style={styles.inputContainer}>
+            <TextInput
+              label="Enter City"
+              value={city}
+              onChangeText={setCity}
+              style={styles.input}
+            />
+            <Menu
+              visible={visible}
+              onDismiss={closeMenu}
+              anchor={
+                <Button mode="outlined" onPress={openMenu} style={styles.dropdown}>
+                  Select City
+                </Button>
+              }>
+              {cities.map((city) => (
+                <Menu.Item key={city.value} onPress={() => { setCity(city.value); closeMenu(); }} title={city.label} />
+              ))}
+            </Menu>
+            <Button mode="contained" onPress={handleNavigate} style={styles.button}>
+              View Matching Itineraries
+            </Button>
+          </View>
+
           <Text style={styles.subtitle}>Latest Listings</Text>
           
           {latestRide && (
@@ -253,29 +339,6 @@ const HomeScreen = ({ navigation }) => {
             </Card>
           )}
 
-          <View style={styles.inputContainer}>
-            <TextInput
-              label="Enter City"
-              value={city}
-              onChangeText={setCity}
-              style={styles.input}
-            />
-            <Menu
-              visible={visible}
-              onDismiss={closeMenu}
-              anchor={
-                <Button mode="outlined" onPress={openMenu} style={styles.dropdown}>
-                  Select City
-                </Button>
-              }>
-              {cities.map((city) => (
-                <Menu.Item key={city.value} onPress={() => { setCity(city.value); closeMenu(); }} title={city.label} />
-              ))}
-            </Menu>
-            <Button mode="contained" onPress={handleNavigate} style={styles.button}>
-              View Matching Itineraries
-            </Button>
-          </View>
         </ScrollView>
         <FAB.Group
           open={fabOpen}
@@ -363,6 +426,13 @@ const styles = StyleSheet.create({
   cardDate: {
     fontSize: 14,
     color: '#757575',
+  },
+  map: {
+    width: Dimensions.get('window').width - 32,
+    height: 150,
+    marginBottom: 16,
+    alignSelf: 'center',
+    borderRadius: 15,
   },
   cardDetails: {
     fontSize: 14,

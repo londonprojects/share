@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { firestore } from '../services/firebase';
-import { Text, Button, Switch, Provider as PaperProvider } from 'react-native-paper';
+import { Text, Switch, Provider as PaperProvider } from 'react-native-paper';
 
 const MapScreen = () => {
   const [leavingPlaces, setLeavingPlaces] = useState([]);
