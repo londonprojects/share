@@ -5,20 +5,43 @@ import { firestore } from '../services/firebase';
 import { Text, Switch, Provider as PaperProvider } from 'react-native-paper';
 
 const MapScreen = () => {
-  const [leavingPlaces, setLeavingPlaces] = useState([]);
-  const [goingPlaces, setGoingPlaces] = useState([]);
-  const [showLeaving, setShowLeaving] = useState(true);
-  const [showGoing, setShowGoing] = useState(true);
+  const [rides, setRides] = useState([]);
+  const [itineraries, setItineraries] = useState([]);
+  const [items, setItems] = useState([]);
+  const [experiences, setExperiences] = useState([]);
+  const [airbnbs, setAirbnbs] = useState([]);
 
   useEffect(() => {
     const fetchPlaces = async () => {
-      const leavingSnapshot = await firestore.collection('rides').where('status', '==', 'leaving').get();
-      const goingSnapshot = await firestore.collection('rides').where('status', '==', 'going').get();
-      
-      setLeavingPlaces(leavingSnapshot.docs.map(doc => doc.data()));
-      setGoingPlaces(goingSnapshot.docs.map(doc => doc.data()));
+      try {
+        const ridesSnapshot = await firestore.collection('rides').get();
+        const itinerariesSnapshot = await firestore.collection('flightItineraries').get();
+        const itemsSnapshot = await firestore.collection('items').get();
+        const experiencesSnapshot = await firestore.collection('experiences').get();
+        const airbnbsSnapshot = await firestore.collection('airbnbs').get();
+
+        const ridesData = ridesSnapshot.docs.map(doc => doc.data());
+        const itinerariesData = itinerariesSnapshot.docs.map(doc => doc.data());
+        const itemsData = itemsSnapshot.docs.map(doc => doc.data());
+        const experiencesData = experiencesSnapshot.docs.map(doc => doc.data());
+        const airbnbsData = airbnbsSnapshot.docs.map(doc => doc.data());
+
+        console.log("Fetched rides data:", ridesData);
+        console.log("Fetched itineraries data:", itinerariesData);
+        console.log("Fetched items data:", itemsData);
+        console.log("Fetched experiences data:", experiencesData);
+        console.log("Fetched airbnbs data:", airbnbsData);
+
+        setRides(ridesData);
+        setItineraries(itinerariesData);
+        setItems(itemsData);
+        setExperiences(experiencesData);
+        setAirbnbs(airbnbsData);
+      } catch (error) {
+        console.error('Error fetching places:', error);
+      }
     };
-    
+
     fetchPlaces();
   }, []);
 
@@ -34,30 +57,75 @@ const MapScreen = () => {
             longitudeDelta: 0.0421,
           }}
         >
-          {showLeaving && leavingPlaces.map((place, index) => (
-            <Marker
-              key={index}
-              coordinate={{ latitude: place.location.latitude, longitude: place.location.longitude }}
-              pinColor="red"
-              title={place.destination}
-              description={`Leaving: ${place.userName}`}
-            />
+          {rides.map((place, index) => (
+            place.location && place.location.latitude && place.location.longitude ? (
+              <Marker
+                key={index}
+                coordinate={{ latitude: place.location.latitude, longitude: place.location.longitude }}
+                pinColor="red"
+                title={place.destination}
+                description={`Leaving: ${place.userName}`}
+              />
+            ) : null
           ))}
-          {showGoing && goingPlaces.map((place, index) => (
-            <Marker
-              key={index}
-              coordinate={{ latitude: place.location.latitude, longitude: place.location.longitude }}
-              pinColor="blue"
-              title={place.destination}
-              description={`Going: ${place.userName}`}
-            />
+          {itineraries.map((itinerary, index) => (
+            <>
+              {itinerary.departureCoords && itinerary.departureCoords.latitude && itinerary.departureCoords.longitude && (
+                <Marker
+                  key={`departure-${index}`}
+                  coordinate={{ latitude: itinerary.departureCoords.latitude, longitude: itinerary.departureCoords.longitude }}
+                  pinColor="green"
+                  title={itinerary.departureCity}
+                  description={`Departure: ${itinerary.userName}`}
+                />
+              )}
+              {itinerary.arrivalCoords && itinerary.arrivalCoords.latitude && itinerary.arrivalCoords.longitude && (
+                <Marker
+                  key={`arrival-${index}`}
+                  coordinate={{ latitude: itinerary.arrivalCoords.latitude, longitude: itinerary.arrivalCoords.longitude }}
+                  pinColor="blue"
+                  title={itinerary.arrivalCity}
+                  description={`Arrival: ${itinerary.userName}`}
+                />
+              )}
+            </>
+          ))}
+          {items.map((item, index) => (
+            item.location && item.location.latitude && item.location.longitude ? (
+              <Marker
+                key={index}
+                coordinate={{ latitude: item.location.latitude, longitude: item.location.longitude }}
+                pinColor="yellow"
+                title={item.name}
+                description={`Item: ${item.userName}`}
+              />
+            ) : null
+          ))}
+          {experiences.map((experience, index) => (
+            experience.location && experience.location.latitude && experience.location.longitude ? (
+              <Marker
+                key={index}
+                coordinate={{ latitude: experience.location.latitude, longitude: experience.location.longitude }}
+                pinColor="purple"
+                title={experience.name}
+                description={`Experience: ${experience.userName}`}
+              />
+            ) : null
+          ))}
+          {airbnbs.map((airbnb, index) => (
+            airbnb.location && airbnb.location.latitude && airbnb.location.longitude ? (
+              <Marker
+                key={index}
+                coordinate={{ latitude: airbnb.location.latitude, longitude: airbnb.location.longitude }}
+                pinColor="orange"
+                title={airbnb.location}
+                description={`Airbnb: ${airbnb.userName}`}
+              />
+            ) : null
           ))}
         </MapView>
         <View style={styles.filters}>
-          <Text style={styles.filterLabel}>Show Leaving</Text>
-          <Switch value={showLeaving} onValueChange={setShowLeaving} />
-          <Text style={styles.filterLabel}>Show Going</Text>
-          <Switch value={showGoing} onValueChange={setShowGoing} />
+          <Text style={styles.filterLabel}>Filters</Text>
         </View>
       </View>
     </PaperProvider>

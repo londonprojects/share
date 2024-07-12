@@ -30,12 +30,20 @@ const theme = {
 
 const DEFAULT_IMAGE = 'https://plus.unsplash.com/premium_photo-1683800241997-a387bacbf06b?q=80&w=1287&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'; // Replace with your default image URL
 
+const dummyUsers = [
+  { id: '1', displayName: 'John Doe', photoURL: 'https://randomuser.me/api/portraits/men/1.jpg' },
+  { id: '2', displayName: 'Jane Smith', photoURL: 'https://randomuser.me/api/portraits/women/2.jpg' },
+  { id: '3', displayName: 'Michael Brown', photoURL: 'https://randomuser.me/api/portraits/men/3.jpg' },
+  { id: '4', displayName: 'Emily White', photoURL: 'https://randomuser.me/api/portraits/women/4.jpg' },
+  { id: '5', displayName: 'Chris Johnson', photoURL: 'https://randomuser.me/api/portraits/men/5.jpg' },
+];
+
 const HomeScreen = ({ navigation }) => {
   const [latestRide, setLatestRide] = useState(null);
   const [latestAirbnb, setLatestAirbnb] = useState(null);
   const [latestItem, setLatestItem] = useState(null);
   const [latestExperience, setLatestExperience] = useState(null);
-  const [recentUsers, setRecentUsers] = useState([]);
+  const [recentUsers, setRecentUsers] = useState(dummyUsers);
   const [visible, setVisible] = useState(false);
   const [city, setCity] = useState('');
   const [fabOpen, setFabOpen] = useState(false);
@@ -63,7 +71,9 @@ const HomeScreen = ({ navigation }) => {
       const usersSnapshot = await firestore.collection('users').orderBy('lastPosted', 'desc').limit(5).get();
       const usersList = usersSnapshot.docs.map(doc => doc.data());
       console.log('Recent Users:', usersList); // Debugging line
-      setRecentUsers(usersList);
+      if (usersList.length > 0) {
+        setRecentUsers(usersList);
+      }
     };
 
     fetchUserProfile();
@@ -96,18 +106,6 @@ const HomeScreen = ({ navigation }) => {
       unsubscribeItems();
       unsubscribeExperiences();
     };
-  }, []);
-
-  useEffect(() => {
-    // Add dummy data to recentUsers
-    const dummyUsers = [
-      { id: '1', displayName: 'John Doe', photoURL: 'https://randomuser.me/api/portraits/men/1.jpg' },
-      { id: '2', displayName: 'Jane Smith', photoURL: 'https://randomuser.me/api/portraits/women/2.jpg' },
-      { id: '3', displayName: 'Michael Brown', photoURL: 'https://randomuser.me/api/portraits/men/3.jpg' },
-      { id: '4', displayName: 'Emily White', photoURL: 'https://randomuser.me/api/portraits/women/4.jpg' },
-      { id: '5', displayName: 'Chris Johnson', photoURL: 'https://randomuser.me/api/portraits/men/5.jpg' },
-    ];
-    setRecentUsers(dummyUsers);
   }, []);
 
   const handleSearch = (query) => {

@@ -3,10 +3,11 @@ import { View, StyleSheet, Alert, Platform } from 'react-native';
 import { Text, TextInput, Button, useTheme, Avatar } from 'react-native-paper';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import Slider from '@react-native-community/slider';
+import axios from 'axios';
 import { firestore, auth } from '../services/firebase'; // Adjust the path as needed
 
 const RideShareScreen = ({ navigation }) => {
-  const [rideDetails, setRideDetails] = useState({ destination: '', date: new Date(), price: 0, numSpaces: 1, timeLimited: false });
+  const [rideDetails, setRideDetails] = useState({ destination: '', date: new Date(), price: 0, numSpaces: 1, timeLimited: false, location: { latitude: null, longitude: null } });
   const [showDatePicker, setShowDatePicker] = useState(false);
   const { colors } = useTheme();
 
@@ -16,9 +17,42 @@ const RideShareScreen = ({ navigation }) => {
     setRideDetails({ ...rideDetails, date: currentDate });
   };
 
-  const handleShare = () => {
+  const getCoordinates = async (address) => {
+    try {
+      const response = await axios.get('https://maps.googleapis.com/maps/api/geocode/json', {
+        params: {
+          address,
+          key: 'AIzaSyAL8jwPOMbTWQoxeSlH01GZPUl7kQYj5YI',
+        },
+      });
+
+      if (response.data.status === 'OK') {
+        const location = response.data.results[0].geometry.location;
+        return {
+          latitude: location.lat,
+          longitude: location.lng,
+        };
+      } else {
+        console.error('Geocoding API error:', response.data.status);
+        Alert.alert('Error', `Geocoding API error: ${response.data.status}`);
+        return null;
+      }
+    } catch (error) {
+      console.error('Geocoding API request failed:', error);
+      Alert.alert('Error', 'Failed to get location coordinates.');
+      return null;
+    }
+  };
+
+  const handleShare = async () => {
     if (!rideDetails.destination || rideDetails.price <= 0 || rideDetails.numSpaces <= 0) {
       Alert.alert("Missing Information", "Please fill in all the details.");
+      return;
+    }
+
+    const coordinates = await getCoordinates(rideDetails.destination);
+    if (!coordinates) {
+      Alert.alert("Error", "Failed to get location coordinates.");
       return;
     }
 
@@ -26,6 +60,7 @@ const RideShareScreen = ({ navigation }) => {
     if (user) {
       const rideWithUser = {
         ...rideDetails,
+        location: coordinates,
         userId: user.uid,
         userName: user.displayName,
         userPhoto: user.photoURL,

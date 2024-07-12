@@ -81,7 +81,26 @@ function RidesScreen({ navigation }) {
           return { ...ride, imageUrl };
         })
       );
-      setFilteredRides(updatedRides);
+
+      // Fetch user details separately
+      const updatedRidesWithUserDetails = await Promise.all(
+        updatedRides.map(async (ride) => {
+          try {
+            const userDoc = await firestore.collection('users').doc(ride.userId).get();
+            const userData = userDoc.data();
+            return {
+              ...ride,
+              userPhoto: userData?.photoURL || DEFAULT_IMAGE,
+              userName: userData?.displayName || 'Unknown',
+            };
+          } catch (error) {
+            console.error('Error fetching user details:', error);
+            return ride;
+          }
+        })
+      );
+
+      setFilteredRides(updatedRidesWithUserDetails);
     };
 
     if (rides.length > 0) {
@@ -192,10 +211,7 @@ function RidesScreen({ navigation }) {
                 <Card.Cover source={{ uri: item.imageUrl || DEFAULT_IMAGE }} style={styles.cardImage} />
                 <Card.Content>
                   <View style={styles.rideHeader}>
-                    {item.userPhoto && <Image source={{ uri: item.userPhoto }} style={styles.userPhoto} />}
-                    {item.userId === auth.currentUser?.uid && auth.currentUser?.photoURL && (
-                      <Image source={{ uri: auth.currentUser.photoURL }} style={styles.userPhoto} />
-                    )}
+                    <Image source={{ uri: item.userPhoto }} style={styles.userPhoto} />
                     <View>
                       <Text style={styles.cardTitle}>{item.destination}</Text>
                       <Text style={styles.userName}>{item.userName}</Text>
@@ -210,17 +226,16 @@ function RidesScreen({ navigation }) {
                   {item.timeLimited && <Text style={styles.rideDetails}>Time Limited</Text>}
                   <Text style={styles.rideDate}>Date: {formatDate(item.date)}</Text>
                 </Card.Content>
-                {item.userId === auth.currentUser?.uid ? (
-                  <Card.Actions>
-                    <IconButton icon="pencil" onPress={() => handleEditCardPress(item)} />
-                    <IconButton icon="delete" onPress={() => handleDelete(item.id)} />
-                  </Card.Actions>
-                ) : (
-                  <Card.Actions>
-                    <IconButton icon="thumb-up" onPress={() => notifyOwner(item.userId, item.id)} />
-                    <IconButton icon="message" onPress={() => handleMessage(item.userId)} />
-                  </Card.Actions>
-                )}
+                <Card.Actions>
+                  <IconButton icon="thumb-up" onPress={() => notifyOwner(item.userId, item.id)} />
+                  <IconButton icon="message" onPress={() => handleMessage(item.userId)} />
+                  {item.userId === auth.currentUser?.uid && (
+                    <>
+                      <IconButton icon="pencil" onPress={() => handleEditCardPress(item)} />
+                      <IconButton icon="delete" onPress={() => handleDelete(item.id)} />
+                    </>
+                  )}
+                </Card.Actions>
               </Card>
             )}
           />

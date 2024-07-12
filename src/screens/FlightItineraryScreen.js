@@ -14,11 +14,15 @@ const FlightItineraryScreen = ({ navigation }) => {
     flightNumber: '',
     date: new Date(),
     arrivalTime: new Date(), // Initialize with a valid Date object
-    city: '',
+    departureCity: '',
+    arrivalCity: '',
+    departureCoords: { latitude: 0, longitude: 0 },
+    arrivalCoords: { latitude: 0, longitude: 0 },
   });
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
-  const [menuVisible, setMenuVisible] = useState(false);
+  const [departureMenuVisible, setDepartureMenuVisible] = useState(false);
+  const [arrivalMenuVisible, setArrivalMenuVisible] = useState(false);
   const [backgroundImage, setBackgroundImage] = useState(null);
 
   const handleDateChange = (event, selectedDate) => {
@@ -34,7 +38,7 @@ const FlightItineraryScreen = ({ navigation }) => {
   };
 
   const handleShare = () => {
-    if (!itinerary.flightNumber || !itinerary.arrivalTime || !itinerary.city) {
+    if (!itinerary.flightNumber || !itinerary.arrivalTime || !itinerary.departureCity || !itinerary.arrivalCity) {
       Alert.alert("Missing Information", "Please fill in all the fields.");
       return;
     }
@@ -76,10 +80,11 @@ const FlightItineraryScreen = ({ navigation }) => {
   };
 
   useEffect(() => {
-    if (itinerary.city) {
-      fetchBackgroundImage(itinerary.city);
+    if (itinerary.departureCity || itinerary.arrivalCity) {
+      const city = itinerary.departureCity || itinerary.arrivalCity;
+      fetchBackgroundImage(city);
     }
-  }, [itinerary.city]);
+  }, [itinerary.departureCity, itinerary.arrivalCity]);
 
   // Animation setup
   const fadeAnim = useRef(new Animated.Value(0)).current; // Initial value for opacity: 0
@@ -105,6 +110,25 @@ const FlightItineraryScreen = ({ navigation }) => {
     ).start();
   }, [fadeAnim, slideAnim]);
 
+  const handleCitySelect = (city, type) => {
+    const selectedCity = cities.find(c => c.label === city);
+    if (type === 'departure') {
+      setItinerary({
+        ...itinerary,
+        departureCity: city,
+        departureCoords: { latitude: selectedCity.latitude, longitude: selectedCity.longitude },
+      });
+      setDepartureMenuVisible(false);
+    } else {
+      setItinerary({
+        ...itinerary,
+        arrivalCity: city,
+        arrivalCoords: { latitude: selectedCity.latitude, longitude: selectedCity.longitude },
+      });
+      setArrivalMenuVisible(false);
+    }
+  };
+
   return (
     <PaperProvider>
       <ImageBackground source={{ uri: backgroundImage }} style={styles.backgroundImage}>
@@ -128,6 +152,7 @@ const FlightItineraryScreen = ({ navigation }) => {
                 onChange={handleDateChange}
               />
             )}
+            <Text style={styles.infoText}>Selected Date: {itinerary.date.toDateString()}</Text>
             <Button mode="contained" onPress={() => setShowTimePicker(true)} style={styles.button}>
               Select Arrival Time
             </Button>
@@ -139,26 +164,43 @@ const FlightItineraryScreen = ({ navigation }) => {
                 onChange={handleTimeChange}
               />
             )}
+            <Text style={styles.infoText}>Selected Time: {itinerary.arrivalTime.toLocaleTimeString()}</Text>
             <Menu
-              visible={menuVisible}
-              onDismiss={() => setMenuVisible(false)}
+              visible={departureMenuVisible}
+              onDismiss={() => setDepartureMenuVisible(false)}
               anchor={
-                <Button mode="outlined" onPress={() => setMenuVisible(true)} style={styles.input}>
-                  {itinerary.city || 'Select City'}
+                <Button mode="outlined" onPress={() => setDepartureMenuVisible(true)} style={styles.input}>
+                  {itinerary.departureCity || 'Select Departure City'}
                 </Button>
               }
             >
               {cities.map((city) => (
                 <Menu.Item
                   key={city.value}
-                  onPress={() => {
-                    setItinerary({ ...itinerary, city: city.label });
-                    setMenuVisible(false);
-                  }}
+                  onPress={() => handleCitySelect(city.label, 'departure')}
                   title={city.label}
                 />
               ))}
             </Menu>
+            <Menu
+              visible={arrivalMenuVisible}
+              onDismiss={() => setArrivalMenuVisible(false)}
+              anchor={
+                <Button mode="outlined" onPress={() => setArrivalMenuVisible(true)} style={styles.input}>
+                  {itinerary.arrivalCity || 'Select Arrival City'}
+                </Button>
+              }
+            >
+              {cities.map((city) => (
+                <Menu.Item
+                  key={city.value}
+                  onPress={() => handleCitySelect(city.label, 'arrival')}
+                  title={city.label}
+                />
+              ))}
+            </Menu>
+            <Text style={styles.infoText}>Departure City: {itinerary.departureCity}</Text>
+            <Text style={styles.infoText}>Arrival City: {itinerary.arrivalCity}</Text>
             <Button mode="contained" onPress={handleShare} style={styles.button}>
               Share Itinerary
             </Button>
@@ -197,6 +239,11 @@ const styles = StyleSheet.create({
   button: {
     width: '80%',
     marginBottom: 16,
+  },
+  infoText: {
+    marginBottom: 16,
+    fontSize: 16,
+    color: '#000',
   },
 });
 
