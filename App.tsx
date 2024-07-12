@@ -29,6 +29,8 @@ import MapScreen from './src/screens/MapScreen';
 import { updateUserLocation } from './src/services/location';
 import { listenForHitchhikingRequests } from './src/services/hitchhiking';
 import CommunityScreen from './src/screens/CommunityScreen';
+import SignUpScreen from './src/screens/SignUpScreen';
+import ForgotPasswordScreen from './src/screens/ForgotPasswordScreen';
 
 const theme = {
   ...DefaultTheme,
@@ -94,6 +96,8 @@ const App = () => {
             <Stack.Screen name="RideShare" component={RideShareScreen} options={{ title: 'Share a Ride' }} />
             <Stack.Screen name="Sharing" component={SharingScreen} />
             <Stack.Screen name="AirbnbShare" component={AirbnbShareScreen} />
+            <Stack.Screen name="SignUp" component={SignUpScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} options={{ headerShown: false }} />
             <Stack.Screen name="ItemShare" component={ItemShareScreen} />
             <Stack.Screen name="ExperienceShare" component={ExperienceShareScreen} />
             <Stack.Screen name="Schedule" component={ScheduleScreen} />
