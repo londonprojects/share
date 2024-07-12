@@ -7,6 +7,7 @@ import { cities } from '../services/cities'; // Adjust the path as needed
 import axios from 'axios';
 
 const UNSPLASH_ACCESS_KEY = 'Y9tdu1sdQdRJV4zwTDqLsSxT9-yJbuud6msoTTMAu_Lg'; // Replace with your Unsplash Access Key
+const DEFAULT_IMAGE_URL = 'https://plus.unsplash.com/premium_photo-1679830513869-cd3648acb1db?q=80&w=1527&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'; // Replace with your default image URL
 
 const FlightItineraryScreen = ({ navigation }) => {
   const [itinerary, setItinerary] = useState({
@@ -70,6 +71,7 @@ const FlightItineraryScreen = ({ navigation }) => {
     })
     .catch(error => {
       console.error('Error fetching image from Unsplash:', error);
+      setBackgroundImage(DEFAULT_IMAGE_URL); // Set default image URL on error
     });
   };
 
