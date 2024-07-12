@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, FlatList, StyleSheet, Image, Alert, ScrollView, TouchableOpacity } from 'react-native';
+import { View, FlatList, StyleSheet, Image, Alert, ScrollView, TouchableOpacity, TextInput} from 'react-native';
 import { Text, Card, Searchbar, IconButton, Appbar, Avatar, Badge, Button, Portal, Dialog, Paragraph, ActivityIndicator } from 'react-native-paper';
 import { firestore, auth } from '../services/firebase';
 import axios from 'axios';
@@ -16,6 +16,8 @@ function RidesScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [selectedRide, setSelectedRide] = useState(null);
   const [dialogVisible, setDialogVisible] = useState(false);
+  const [editDialogVisible, setEditDialogVisible] = useState(false);
+  const [editRideDetails, setEditRideDetails] = useState({ destination: '', price: '', numPlaces: '', date: new Date() });
   const [userProfilePhoto, setUserProfilePhoto] = useState(null); // Add state for user profile photo
 
   useEffect(() => {
@@ -117,7 +119,39 @@ function RidesScreen({ navigation }) {
     setDialogVisible(true);
   };
 
+  const handleEditCardPress = (ride) => {
+    setEditRideDetails(ride);
+    setEditDialogVisible(true);
+  };
+
   const hideDialog = () => setDialogVisible(false);
+  const hideEditDialog = () => setEditDialogVisible(false);
+
+  const handleEditChange = (field, value) => {
+    setEditRideDetails((prevDetails) => ({
+      ...prevDetails,
+      [field]: value,
+    }));
+  };
+
+  const handleSaveEdit = async () => {
+    try {
+      await firestore.collection('rides').doc(editRideDetails.id).update(editRideDetails);
+      setEditDialogVisible(false);
+      Alert.alert('Success', 'Ride details updated successfully!');
+    } catch (error) {
+      Alert.alert('Error', error.message);
+    }
+  };
+
+  const handleDelete = async (rideId) => {
+    try {
+      await firestore.collection('rides').doc(rideId).delete();
+      Alert.alert('Success', 'Ride deleted successfully!');
+    } catch (error) {
+      Alert.alert('Error', error.message);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -176,7 +210,12 @@ function RidesScreen({ navigation }) {
                   {item.timeLimited && <Text style={styles.rideDetails}>Time Limited</Text>}
                   <Text style={styles.rideDate}>Date: {formatDate(item.date)}</Text>
                 </Card.Content>
-                {item.userId !== auth.currentUser?.uid && (
+                {item.userId === auth.currentUser?.uid ? (
+                  <Card.Actions>
+                    <IconButton icon="pencil" onPress={() => handleEditCardPress(item)} />
+                    <IconButton icon="delete" onPress={() => handleDelete(item.id)} />
+                  </Card.Actions>
+                ) : (
                   <Card.Actions>
                     <IconButton icon="thumb-up" onPress={() => notifyOwner(item.userId, item.id)} />
                     <IconButton icon="message" onPress={() => handleMessage(item.userId)} />
@@ -203,6 +242,35 @@ function RidesScreen({ navigation }) {
           </Dialog.Content>
           <Dialog.Actions>
             <Button onPress={hideDialog}>Close</Button>
+          </Dialog.Actions>
+        </Dialog>
+        <Dialog visible={editDialogVisible} onDismiss={hideEditDialog}>
+          <Dialog.Title>Edit Ride Details</Dialog.Title>
+          <Dialog.Content>
+            <TextInput
+              label="Destination"
+              value={editRideDetails.destination}
+              onChangeText={(text) => handleEditChange('destination', text)}
+              style={styles.input}
+            />
+            <TextInput
+              label="Price"
+              value={editRideDetails.price}
+              onChangeText={(text) => handleEditChange('price', text)}
+              style={styles.input}
+              keyboardType="numeric"
+            />
+            <TextInput
+              label="Number of Places"
+              value={editRideDetails.numPlaces}
+              onChangeText={(text) => handleEditChange('numPlaces', text)}
+              style={styles.input}
+              keyboardType="numeric"
+            />
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={hideEditDialog}>Cancel</Button>
+            <Button onPress={handleSaveEdit}>Save</Button>
           </Dialog.Actions>
         </Dialog>
       </Portal>
@@ -284,6 +352,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -10,
     right: -10,
+  },
+  input: {
+    marginBottom: 10,
   },
 });
 
