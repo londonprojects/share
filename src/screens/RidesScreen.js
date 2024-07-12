@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, FlatList, StyleSheet, Image, Alert, ScrollView } from 'react-native';
-import { Text, Card, Searchbar, IconButton, Appbar, Avatar, Badge } from 'react-native-paper';
+import { View, FlatList, StyleSheet, Image, Alert, ScrollView, TouchableOpacity } from 'react-native';
+import { Text, Card, Searchbar, IconButton, Appbar, Avatar, Badge, Button, Portal, Dialog, Paragraph } from 'react-native-paper';
 import { firestore, auth } from '../services/firebase';
 import axios from 'axios';
 
@@ -13,8 +13,17 @@ function RidesScreen({ navigation }) {
   const [query, setQuery] = useState('');
   const [recentUsers, setRecentUsers] = useState([]);
   const [messages, setMessages] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [selectedRide, setSelectedRide] = useState(null);
+  const [dialogVisible, setDialogVisible] = useState(false);
+  const [userProfilePhoto, setUserProfilePhoto] = useState(null); // Add state for user profile photo
 
   useEffect(() => {
+    const user = auth.currentUser;
+    if (user) {
+      setUserProfilePhoto(user.photoURL); // Set the user's profile photo URL
+    }
+
     const unsubscribeRides = firestore.collection('rides').onSnapshot(snapshot => {
       const ridesList = snapshot.docs.map(doc => ({
         id: doc.id,
@@ -22,6 +31,7 @@ function RidesScreen({ navigation }) {
       }));
       setRides(ridesList);
       setFilteredRides(ridesList);
+      setLoading(false);
     });
 
     const fetchRecentUsers = async () => {
@@ -102,60 +112,100 @@ function RidesScreen({ navigation }) {
     navigation.navigate('MessageScreen', { userId });
   };
 
+  const handleCardPress = (ride) => {
+    setSelectedRide(ride);
+    setDialogVisible(true);
+  };
+
+  const hideDialog = () => setDialogVisible(false);
+
   return (
     <View style={styles.container}>
-      <Appbar.Header>
+      <Appbar.Header style={styles.appbar}>
         <Appbar.BackAction onPress={() => navigation.goBack()} />
-        <Appbar.Content title="Rides" />
-      </Appbar.Header>
-      <View style={styles.avatarContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {recentUsers.map((user, index) => (
-            <Avatar.Image key={index} size={50} source={{ uri: user.photoURL || DEFAULT_IMAGE }} style={styles.avatar} />
-          ))}
-        </ScrollView>
-      </View>
-      <Searchbar
-        placeholder="Search"
-        onChangeText={handleSearch}
-        value={query}
-        style={styles.searchbar}
-      />
-      <FlatList
-        data={filteredRides}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <Card style={styles.card}>
-            <Card.Cover source={{ uri: item.imageUrl || DEFAULT_IMAGE }} style={styles.cardImage} />
-            <Card.Content>
-              <View style={styles.rideHeader}>
-                {item.userPhoto && <Image source={{ uri: item.userPhoto }} style={styles.userPhoto} />}
-                {item.userId === auth.currentUser?.uid && auth.currentUser?.photoURL && (
-                  <Image source={{ uri: auth.currentUser.photoURL }} style={styles.userPhoto} />
-                )}
-                <View>
-                  <Text style={styles.cardTitle}>{item.destination}</Text>
-                  <Text style={styles.userName}>{item.userName}</Text>
-                  <Text style={styles.cardDate}>{formatDate(item.dateListed)}</Text>
-                </View>
-                {messages[item.userId] && (
-                  <Badge style={styles.badge}>{messages[item.userId].length}</Badge>
-                )}
-              </View>
-              <Text style={styles.rideDetails}>Price: ${item.price}</Text>
-              <Text style={styles.rideDetails}>Number of Places: {item.numPlaces}</Text>
-              {item.timeLimited && <Text style={styles.rideDetails}>Time Limited</Text>}
-              <Text style={styles.rideDate}>Date: {formatDate(item.date)}</Text>
-            </Card.Content>
-            {item.userId !== auth.currentUser?.uid && (
-              <Card.Actions>
-                <IconButton icon="thumb-up" onPress={() => notifyOwner(item.userId, item.id)} />
-                <IconButton icon="message" onPress={() => handleMessage(item.userId)} />
-              </Card.Actions>
-            )}
-          </Card>
+        <Appbar.Content title="ShareApp" />
+        <Appbar.Action icon="map" onPress={() => navigation.navigate('MapScreen')} />
+        {userProfilePhoto ? (
+          <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
+            <Image source={{ uri: userProfilePhoto }} style={styles.profilePhoto} />
+          </TouchableOpacity>
+        ) : (
+          <Appbar.Action icon="account" onPress={() => navigation.navigate('Profile')} />
         )}
-      />
+      </Appbar.Header>
+      {loading ? (
+        <ActivityIndicator style={styles.loading} />
+      ) : (
+        <>
+          <View style={styles.avatarContainer}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {recentUsers.map((user, index) => (
+                <Avatar.Image key={index} size={50} source={{ uri: user.photoURL || DEFAULT_IMAGE }} style={styles.avatar} />
+              ))}
+            </ScrollView>
+          </View>
+          <Searchbar
+            placeholder="Search"
+            onChangeText={handleSearch}
+            value={query}
+            style={styles.searchbar}
+          />
+          <FlatList
+            data={filteredRides}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <Card style={styles.card} onPress={() => handleCardPress(item)}>
+                <Card.Cover source={{ uri: item.imageUrl || DEFAULT_IMAGE }} style={styles.cardImage} />
+                <Card.Content>
+                  <View style={styles.rideHeader}>
+                    {item.userPhoto && <Image source={{ uri: item.userPhoto }} style={styles.userPhoto} />}
+                    {item.userId === auth.currentUser?.uid && auth.currentUser?.photoURL && (
+                      <Image source={{ uri: auth.currentUser.photoURL }} style={styles.userPhoto} />
+                    )}
+                    <View>
+                      <Text style={styles.cardTitle}>{item.destination}</Text>
+                      <Text style={styles.userName}>{item.userName}</Text>
+                      <Text style={styles.cardDate}>{formatDate(item.dateListed)}</Text>
+                    </View>
+                    {messages[item.userId] && (
+                      <Badge style={styles.badge}>{messages[item.userId].length}</Badge>
+                    )}
+                  </View>
+                  <Text style={styles.rideDetails}>Price: ${item.price}</Text>
+                  <Text style={styles.rideDetails}>Number of Places: {item.numPlaces}</Text>
+                  {item.timeLimited && <Text style={styles.rideDetails}>Time Limited</Text>}
+                  <Text style={styles.rideDate}>Date: {formatDate(item.date)}</Text>
+                </Card.Content>
+                {item.userId !== auth.currentUser?.uid && (
+                  <Card.Actions>
+                    <IconButton icon="thumb-up" onPress={() => notifyOwner(item.userId, item.id)} />
+                    <IconButton icon="message" onPress={() => handleMessage(item.userId)} />
+                  </Card.Actions>
+                )}
+              </Card>
+            )}
+          />
+        </>
+      )}
+      <Portal>
+        <Dialog visible={dialogVisible} onDismiss={hideDialog}>
+          <Dialog.Title>Ride Details</Dialog.Title>
+          <Dialog.Content>
+            {selectedRide && (
+              <>
+                <Paragraph>Destination: {selectedRide.destination}</Paragraph>
+                <Paragraph>Price: ${selectedRide.price}</Paragraph>
+                <Paragraph>Number of Places: {selectedRide.numPlaces}</Paragraph>
+                <Paragraph>Date: {formatDate(selectedRide.date)}</Paragraph>
+                <Paragraph>Time Limited: {selectedRide.timeLimited ? 'Yes' : 'No'}</Paragraph>
+              </>
+            )}
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={hideDialog}>Close</Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
     </View>
   );
 }
@@ -164,6 +214,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f9fa',
+  },
+  loading: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   searchbar: {
     margin: 16,
@@ -189,6 +244,12 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   userPhoto: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 8,
+  },
+  profilePhoto: {
     width: 40,
     height: 40,
     borderRadius: 20,

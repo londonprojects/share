@@ -57,7 +57,11 @@ const App = () => {
       <SafeAreaProvider>
         <NavigationContainer>
           <Stack.Navigator initialRouteName="Auth">
-            <Stack.Screen name="Auth" component={AuthScreen} />
+          <Stack.Screen 
+            name="Auth" 
+            component={AuthScreen} 
+            options={{ headerShown: false }} 
+          />
             <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
             <Stack.Screen name="FlightItinerary" component={FlightItineraryScreen} />
             <Stack.Screen name="MatchingItineraries" component={MatchingItinerariesScreen} />
