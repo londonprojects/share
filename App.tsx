@@ -22,6 +22,7 @@ import AuthScreen from './src/screens/AuthScreen';
 import SharingScreen from './src/screens/SharingScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import MessengerScreen from './src/screens/MessengerScreen';
+import MessageScreen from './src/screens/MessageScreen';
 import FlightItineraryScreen from './src/screens/FlightItineraryScreen';
 import MatchingItinerariesScreen from './src/screens/MatchingItinerariesScreen';
 import EditProfileScreen from './src/screens/EditProfileScreen';
@@ -115,6 +116,7 @@ const App = () => {
             <Stack.Screen name="EditProfile" component={EditProfileScreen} />
             <Stack.Screen name="MapScreen" component={MapScreen} />
             <Stack.Screen name="Messenger" component={MessengerScreen} options={{ title: 'Messenger' }} />
+            <Stack.Screen name="MessageScreen" component={MessageScreen} options={{ title: 'Message' }} />
             <Stack.Screen name="RidesScreen" component={RidesScreen} options={{ headerShown: false }} />
           </Stack.Navigator>
         </NavigationContainer>
