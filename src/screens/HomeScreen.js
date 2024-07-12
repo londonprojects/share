@@ -132,6 +132,10 @@ const HomeScreen = ({ navigation }) => {
               ))}
             </ScrollView>
           </View>
+          <Button 
+        title="Go to Community" 
+        onPress={() => navigation.navigate('Community')} 
+      />
           <Text style={styles.subtitle}>Latest Listings</Text>
           
           {latestRide && (

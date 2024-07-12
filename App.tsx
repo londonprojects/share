@@ -27,6 +27,7 @@ import MatchingItinerariesScreen from './src/screens/MatchingItinerariesScreen';
 import EditProfileScreen from './src/screens/EditProfileScreen';
 import { updateUserLocation } from './src/services/location';
 import { listenForHitchhikingRequests } from './src/services/hitchhiking';
+import CommunityScreen from './src/screens/CommunityScreen';
 
 const theme = {
   ...DefaultTheme,
@@ -62,6 +63,21 @@ const App = () => {
             component={AuthScreen} 
             options={{ headerShown: false }} 
           />
+          {/* <Stack.Screen 
+            name="Home" 
+            component={HomeScreen} 
+            options={{ headerShown: true }} // Example for showing header
+          /> */}
+          <Stack.Screen 
+            name="Rides" 
+            component={RidesScreen} 
+            options={{ headerShown: false }} // Hide header on RidesScreen
+          />
+          {/* <Stack.Screen 
+            name="MessageScreen" 
+            component={MessageScreen} 
+            options={{ headerShown: true }} // Example for showing header
+          /> */}
             <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
             <Stack.Screen name="FlightItinerary" component={FlightItineraryScreen} />
             <Stack.Screen name="MatchingItineraries" component={MatchingItinerariesScreen} />
@@ -82,6 +98,7 @@ const App = () => {
                 ...TransitionPresets.ModalSlideFromBottomIOS,
               }}
             />
+            <Stack.Screen name="Community" component={CommunityScreen} />
             <Stack.Screen name="EditProfile" component={EditProfileScreen} />
             <Stack.Screen name="Messenger" component={MessengerScreen} options={{ title: 'Messenger' }} />
             <Stack.Screen name="RidesScreen" component={RidesScreen} options={{ title: 'Rides' }} />

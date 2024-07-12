@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, FlatList, StyleSheet, Image, Alert, ScrollView, TouchableOpacity, TextInput} from 'react-native';
+import { View, FlatList, StyleSheet, Image, Alert, ScrollView, TouchableOpacity, TextInput } from 'react-native';
 import { Text, Card, Searchbar, IconButton, Appbar, Avatar, Badge, Button, Portal, Dialog, Paragraph, ActivityIndicator } from 'react-native-paper';
 import { firestore, auth } from '../services/firebase';
 import axios from 'axios';
