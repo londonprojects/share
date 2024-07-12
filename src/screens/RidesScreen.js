@@ -5,6 +5,7 @@ import { firestore, auth } from '../services/firebase';
 import axios from 'axios';
 
 const UNSPLASH_ACCESS_KEY = '9tdu1sdQdRJV4zwTDqLsSxT9-yJbuud6msoTTMAu_Lg'; // Replace with your Unsplash Access Key
+const DEFAULT_IMAGE = 'https://images.unsplash.com/photo-1716671827397-8948fb218779?q=80&w=1287&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'; // Replace with your default image URL
 
 function RidesScreen({ navigation }) {
   const [rides, setRides] = useState([]);
@@ -43,7 +44,7 @@ function RidesScreen({ navigation }) {
       return response.data.urls.regular;
     } catch (error) {
       console.error('Error fetching image from Unsplash:', error);
-      return null;
+      return DEFAULT_IMAGE;
     }
   };
 
@@ -93,7 +94,7 @@ function RidesScreen({ navigation }) {
       <View style={styles.avatarContainer}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           {recentUsers.map((user, index) => (
-            <Avatar.Image key={index} size={50} source={{ uri: user.photoURL }} style={styles.avatar} />
+            <Avatar.Image key={index} size={50} source={{ uri: user.photoURL || DEFAULT_IMAGE }} style={styles.avatar} />
           ))}
         </ScrollView>
       </View>
@@ -108,7 +109,7 @@ function RidesScreen({ navigation }) {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <Card style={styles.card}>
-            {item.imageUrl && <Card.Cover source={{ uri: item.imageUrl }} style={styles.cardImage} />}
+            <Card.Cover source={{ uri: item.imageUrl || DEFAULT_IMAGE }} style={styles.cardImage} />
             <Card.Content>
               <View style={styles.rideHeader}>
                 {item.userPhoto && <Image source={{ uri: item.userPhoto }} style={styles.userPhoto} />}

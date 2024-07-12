@@ -15,6 +15,8 @@ const theme = {
   },
 };
 
+const DEFAULT_IMAGE = 'https://plus.unsplash.com/premium_photo-1683800241997-a387bacbf06b?q=80&w=1287&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'; // Replace with your default image URL
+
 const HomeScreen = ({ navigation }) => {
   const [latestRide, setLatestRide] = useState(null);
   const [latestAirbnb, setLatestAirbnb] = useState(null);
@@ -39,7 +41,7 @@ const HomeScreen = ({ navigation }) => {
 
     const fetchImageAndSetState = async (doc, setState, query) => {
       const data = { id: doc.id, ...doc.data() };
-      data.imageUrl = await getRandomImage(query);
+      data.imageUrl = await getRandomImage(query) || DEFAULT_IMAGE;
       setState(data);
     };
 
@@ -126,7 +128,7 @@ const HomeScreen = ({ navigation }) => {
           <View style={styles.avatarContainer}>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               {recentUsers.map((user, index) => (
-                <Avatar.Image key={index} size={50} source={{ uri: user.photoURL }} style={styles.avatar} />
+                <Avatar.Image key={index} size={50} source={{ uri: user.photoURL || DEFAULT_IMAGE }} style={styles.avatar} />
               ))}
             </ScrollView>
           </View>
@@ -134,7 +136,7 @@ const HomeScreen = ({ navigation }) => {
           
           {latestRide && (
             <Card style={styles.card}>
-              <Card.Cover source={{ uri: latestRide.imageUrl }} style={styles.cardImage} />
+              <Card.Cover source={{ uri: latestRide.imageUrl || DEFAULT_IMAGE }} style={styles.cardImage} />
               <Card.Content>
                 <View style={styles.cardHeader}>
                   {latestRide.userPhoto && <Image source={{ uri: latestRide.userPhoto }} style={styles.userPhoto} />}
@@ -165,7 +167,7 @@ const HomeScreen = ({ navigation }) => {
 
           {latestAirbnb && (
             <Card style={styles.card}>
-              <Card.Cover source={{ uri: latestAirbnb.imageUrl }} style={styles.cardImage} />
+              <Card.Cover source={{ uri: latestAirbnb.imageUrl || DEFAULT_IMAGE }} style={styles.cardImage} />
               <Card.Content>
                 <View style={styles.cardHeader}>
                   {latestAirbnb.userPhoto && <Image source={{ uri: latestAirbnb.userPhoto }} style={styles.userPhoto} />}
@@ -195,7 +197,7 @@ const HomeScreen = ({ navigation }) => {
 
           {latestItem && (
             <Card style={styles.card}>
-              <Card.Cover source={{ uri: latestItem.imageUrl }} style={styles.cardImage} />
+              <Card.Cover source={{ uri: latestItem.imageUrl || DEFAULT_IMAGE }} style={styles.cardImage} />
               <Card.Content>
                 <View style={styles.cardHeader}>
                   {latestItem.userPhoto && <Image source={{ uri: latestItem.userPhoto }} style={styles.userPhoto} />}
@@ -222,7 +224,7 @@ const HomeScreen = ({ navigation }) => {
 
           {latestExperience && (
             <Card style={styles.card}>
-              <Card.Cover source={{ uri: latestExperience.imageUrl }} style={styles.cardImage} />
+              <Card.Cover source={{ uri: latestExperience.imageUrl || DEFAULT_IMAGE }} style={styles.cardImage} />
               <Card.Content>
                 <View style={styles.cardHeader}>
                   {latestExperience.userPhoto && <Image source={{ uri: latestExperience.userPhoto }} style={styles.userPhoto} />}
