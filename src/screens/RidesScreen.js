@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, FlatList, StyleSheet, Image, Alert, ScrollView } from 'react-native';
-import { Text, Card, Searchbar, IconButton, Appbar, Avatar } from 'react-native-paper';
+import { Text, Card, Searchbar, IconButton, Appbar, Avatar, Badge } from 'react-native-paper';
 import { firestore, auth } from '../services/firebase';
 import axios from 'axios';
 
@@ -12,6 +12,7 @@ function RidesScreen({ navigation }) {
   const [filteredRides, setFilteredRides] = useState([]);
   const [query, setQuery] = useState('');
   const [recentUsers, setRecentUsers] = useState([]);
+  const [messages, setMessages] = useState({});
 
   useEffect(() => {
     const unsubscribeRides = firestore.collection('rides').onSnapshot(snapshot => {
@@ -29,7 +30,19 @@ function RidesScreen({ navigation }) {
       setRecentUsers(usersList);
     };
 
+    const fetchMessages = async () => {
+      const messagesSnapshot = await firestore.collection('messages').where('receiverId', '==', auth.currentUser?.uid).get();
+      const messagesList = messagesSnapshot.docs.reduce((acc, doc) => {
+        const data = doc.data();
+        if (!acc[data.senderId]) acc[data.senderId] = [];
+        acc[data.senderId].push(data);
+        return acc;
+      }, {});
+      setMessages(messagesList);
+    };
+
     fetchRecentUsers();
+    fetchMessages();
 
     return () => {
       unsubscribeRides();
@@ -85,6 +98,10 @@ function RidesScreen({ navigation }) {
     return 'Unknown date';
   };
 
+  const handleMessage = (userId) => {
+    navigation.navigate('MessageScreen', { userId });
+  };
+
   return (
     <View style={styles.container}>
       <Appbar.Header>
@@ -121,6 +138,9 @@ function RidesScreen({ navigation }) {
                   <Text style={styles.userName}>{item.userName}</Text>
                   <Text style={styles.cardDate}>{formatDate(item.dateListed)}</Text>
                 </View>
+                {messages[item.userId] && (
+                  <Badge style={styles.badge}>{messages[item.userId].length}</Badge>
+                )}
               </View>
               <Text style={styles.rideDetails}>Price: ${item.price}</Text>
               <Text style={styles.rideDetails}>Number of Places: {item.numPlaces}</Text>
@@ -130,6 +150,7 @@ function RidesScreen({ navigation }) {
             {item.userId !== auth.currentUser?.uid && (
               <Card.Actions>
                 <IconButton icon="thumb-up" onPress={() => notifyOwner(item.userId, item.id)} />
+                <IconButton icon="message" onPress={() => handleMessage(item.userId)} />
               </Card.Actions>
             )}
           </Card>
@@ -194,6 +215,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#757575',
     marginTop: 8,
+  },
+  badge: {
+    backgroundColor: 'red',
+    color: 'white',
+    fontSize: 12,
+    position: 'absolute',
+    top: -10,
+    right: -10,
   },
 });
 
