@@ -1,15 +1,23 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ImageBackground, TextInput, TouchableOpacity, Text } from 'react-native';
-import { Button } from 'react-native-paper';
+import { Button, IconButton } from 'react-native-paper';
+import CheckBox from '@react-native-community/checkbox';
 import { auth } from '../services/firebase'; // Make sure to import your firebase configuration
 
 const AuthScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [remindMe, setRemindMe] = useState(false);
 
   const handleLogin = async () => {
     try {
       await auth.signInWithEmailAndPassword(email, password);
+      if (remindMe) {
+        // Save the user's credentials securely if remind me is checked
+        // This is just a placeholder, in a real app you would use secure storage
+        console.log('User opted to be reminded');
+      }
       navigation.navigate('Home'); // Navigate to your home screen after login
     } catch (error) {
       alert(error.message);
@@ -30,14 +38,30 @@ const AuthScreen = ({ navigation }) => {
           value={email}
           onChangeText={setEmail}
         />
-        <TextInput
-          placeholder="Password"
-          placeholderTextColor="#ffffff"
-          style={styles.input}
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-        />
+        <View style={styles.passwordContainer}>
+          <TextInput
+            placeholder="Password"
+            placeholderTextColor="#ffffff"
+            style={styles.passwordInput}
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry={!showPassword}
+          />
+          <IconButton
+            icon={showPassword ? "eye-off" : "eye"}
+            color="#ffffff"
+            onPress={() => setShowPassword(!showPassword)}
+            style={styles.eyeIcon}
+          />
+        </View>
+        <View style={styles.remindMeContainer}>
+          <CheckBox
+            value={remindMe}
+            onValueChange={setRemindMe}
+            tintColors={{ true: '#ffffff', false: '#ffffff' }}
+          />
+          <Text style={styles.remindMeText}>Remind Me</Text>
+        </View>
         <Button mode="contained" onPress={handleLogin} style={styles.button}>
           Sign in
         </Button>
@@ -77,6 +101,32 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     borderRadius: 5,
     paddingHorizontal: 10,
+    color: '#ffffff',
+  },
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    height: 50,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    marginBottom: 20,
+    borderRadius: 5,
+  },
+  passwordInput: {
+    flex: 1,
+    height: '100%',
+    paddingHorizontal: 10,
+    color: '#ffffff',
+  },
+  eyeIcon: {
+    marginRight: 10,
+  },
+  remindMeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  remindMeText: {
     color: '#ffffff',
   },
   button: {
