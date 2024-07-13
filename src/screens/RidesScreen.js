@@ -176,7 +176,7 @@ function RidesScreen({ navigation }) {
     <View style={styles.container}>
       <Appbar.Header style={styles.appbar}>
         <Appbar.BackAction onPress={() => navigation.goBack()} />
-        <Appbar.Content title="ShareApp" />
+        <Appbar.Content title="" />
         <Appbar.Action icon="map" onPress={() => navigation.navigate('MapScreen')} />
         {userProfilePhoto ? (
           <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
