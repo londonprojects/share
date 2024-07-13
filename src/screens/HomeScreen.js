@@ -154,6 +154,11 @@ const HomeScreen = ({ navigation }) => {
               size={30}
               onPress={() => navigation.navigate('Community')}
             />
+            <IconButton
+                icon="comment-outline" // Replace with the desired icon name
+                size={30}
+                onPress={() => navigation.navigate('Messenger', { userId: 'exampleUserId' })}
+              />
               <IconButton
                 icon="camera" // Replace with the desired icon name
                 size={30}

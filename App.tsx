@@ -34,6 +34,8 @@ import SignUpScreen from './src/screens/SignUpScreen';
 import ForgotPasswordScreen from './src/screens/ForgotPasswordScreen';
 import MessagesListScreen from './src/screens/MessagesListScreen';
 import MessagesDetailsScreen from './src/screens/MessageDetailScreen';
+import LoginScreen from './src/screens/LoginScreen';
+import UserProfileScreen from './src/screens/UserProfileScreen';
 
 const theme = {
   ...DefaultTheme,
@@ -114,6 +116,7 @@ const App = () => {
                 ...TransitionPresets.ModalSlideFromBottomIOS,
               }}
             />
+            <Stack.Screen name="Login" component={LoginScreen} />
             <Stack.Screen name="Community" component={CommunityScreen} />
             <Stack.Screen name="EditProfile" component={EditProfileScreen} />
             <Stack.Screen name="MapScreen" component={MapScreen} />
@@ -122,6 +125,7 @@ const App = () => {
             <Stack.Screen name="RidesScreen" component={RidesScreen} options={{ headerShown: false }} />
             <Stack.Screen name="MessagesList" component={MessagesListScreen} />
             <Stack.Screen name="MessageDetail" component={MessagesDetailsScreen} />
+            <Stack.Screen name="UserProfile" component={UserProfileScreen} />
           </Stack.Navigator>
         </NavigationContainer>
       </SafeAreaProvider>
