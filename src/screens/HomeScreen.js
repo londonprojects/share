@@ -157,7 +157,7 @@ const HomeScreen = ({ navigation }) => {
               <IconButton
                 icon="camera" // Replace with the desired icon name
                 size={30}
-                onPress={() => navigation.navigate('Messenger', { userId: 'exampleUserId' })}
+                onPress={() => navigation.navigate('MessagesList', { userId: 'exampleUserId' })}
               />
             <IconButton
               icon="map" // Replace with the desired icon name

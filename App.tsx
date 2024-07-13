@@ -32,6 +32,8 @@ import { listenForHitchhikingRequests } from './src/services/hitchhiking';
 import CommunityScreen from './src/screens/CommunityScreen';
 import SignUpScreen from './src/screens/SignUpScreen';
 import ForgotPasswordScreen from './src/screens/ForgotPasswordScreen';
+import MessagesListScreen from './src/screens/MessagesListScreen';
+import MessagesDetailsScreen from './src/screens/MessageDetailScreen';
 
 const theme = {
   ...DefaultTheme,
@@ -118,6 +120,8 @@ const App = () => {
             <Stack.Screen name="Messenger" component={MessengerScreen} options={{ title: 'Messenger' }} />
             <Stack.Screen name="MessageScreen" component={MessageScreen} options={{ title: 'Message' }} />
             <Stack.Screen name="RidesScreen" component={RidesScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="MessagesList" component={MessagesListScreen} />
+            <Stack.Screen name="MessageDetail" component={MessagesDetailsScreen} />
           </Stack.Navigator>
         </NavigationContainer>
       </SafeAreaProvider>
