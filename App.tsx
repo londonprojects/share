@@ -16,10 +16,12 @@ import HomeScreen from './src/screens/HomeScreen';
 import RideShareScreen from './src/screens/RideShareScreen';
 import RidesScreen from './src/screens/RidesScreen';
 import AirbnbShareScreen from './src/screens/AirbnbShareScreen';
+import AirbnbScreen from './src/screens/AirbnbScreen';
 import ScheduleScreen from './src/screens/ScheduleScreen';
 import ItemShareScreen from './src/screens/ItemShareScreen';
 import ItemShare from './src/screens/ItemScreen';
 import ExperienceShareScreen from './src/screens/ExperienceShareScreen';
+import ExperienceScreen from './src/screens/ExperienceScreen';
 import AuthScreen from './src/screens/AuthScreen';
 import SharingScreen from './src/screens/SharingScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
@@ -87,7 +89,8 @@ const App = () => {
             <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} options={{ headerShown: false }} />
             <Stack.Screen name="ItemShareScreen" component={ItemShareScreen} />
             <Stack.Screen name="ItemShare" component={ItemShare} />
-            <Stack.Screen name="ExperienceShare" component={ExperienceShareScreen} />
+            <Stack.Screen name="ExperienceShareScreen" component={ExperienceShareScreen} />
+            <Stack.Screen name="ExperienceShare" component={ExperienceScreen} />
             <Stack.Screen name="Schedule" component={ScheduleScreen} />
             <Stack.Screen 
               name="Profile" 
@@ -109,6 +112,7 @@ const App = () => {
             <Stack.Screen name="MessagesList" component={MessagesListScreen} />
             <Stack.Screen name="MessageDetail" component={MessagesDetailsScreen} />
             <Stack.Screen name="UserProfile" component={UserProfileScreen} />
+            <Stack.Screen name="AirbnbScreen" component={AirbnbScreen} options={{ headerShown: false }} />
           </Stack.Navigator>
         </NavigationContainer>
       </SafeAreaProvider>

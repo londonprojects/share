@@ -4,12 +4,12 @@ import { Text, Card, Button, Avatar } from 'react-native-paper';
 import { firestore, auth } from '../services/firebase';
 
 const MatchingItinerariesScreen = ({ route, navigation }) => {
-  const { city } = route.params;
+  const { airport } = route.params;
   const [itineraries, setItineraries] = useState([]);
 
   useEffect(() => {
     const unsubscribe = firestore.collection('flightItineraries')
-      .where('city', '==', city)
+      .where('arrivalAirport', '==', airport) // Ensure this matches the field name in your documents
       .onSnapshot(snapshot => {
         const itinerariesList = snapshot.docs.map(doc => ({
           id: doc.id,
@@ -19,7 +19,7 @@ const MatchingItinerariesScreen = ({ route, navigation }) => {
       });
 
     return () => unsubscribe();
-  }, [city]);
+  }, [airport]);
 
   const contactUser = (userId) => {
     // Implement the logic to contact the user via messenger or chat
@@ -33,9 +33,16 @@ const MatchingItinerariesScreen = ({ route, navigation }) => {
     return 'Unknown date';
   };
 
+  const formatTime = (timestamp) => {
+    if (timestamp && timestamp.seconds) {
+      return new Date(timestamp.seconds * 1000).toLocaleTimeString();
+    }
+    return 'Unknown time';
+  };
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>People arriving in {city}</Text>
+      <Text style={styles.title}>People arriving at {airport}</Text>
       <FlatList
         data={itineraries}
         keyExtractor={(item) => item.id}
@@ -43,12 +50,15 @@ const MatchingItinerariesScreen = ({ route, navigation }) => {
           <Card style={styles.card}>
             <Card.Title
               title={item.userName}
+              subtitle={item.userBio}
               left={(props) => item.userPhoto ? <Avatar.Image {...props} source={{ uri: item.userPhoto }} /> : <Avatar.Icon {...props} icon="account" />}
             />
             <Card.Content>
-              <Text>Flight: {item.flightNumber}</Text>
-              <Text>Arrival Time: {item.arrivalTime}</Text>
-              <Text>Date: {formatDate(item.date)}</Text>
+              <Text style={styles.detailText}>Flight: {item.flightNumber}</Text>
+              <Text style={styles.detailText}>Departure City: {item.departureCity}</Text>
+              <Text style={styles.detailText}>Arrival Time: {formatTime(item.arrivalTime)}</Text>
+              <Text style={styles.detailText}>Date: {formatDate(item.date)}</Text>
+              <Text style={styles.detailText}>Duration: {item.duration}</Text>
             </Card.Content>
             <Card.Actions>
               {item.userId !== auth.currentUser?.uid && (
@@ -69,7 +79,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8f9fa',
   },
   title: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 16,
     textAlign: 'center',
@@ -77,6 +87,10 @@ const styles = StyleSheet.create({
   card: {
     marginVertical: 8,
     marginHorizontal: 16,
+  },
+  detailText: {
+    fontSize: 16,
+    marginBottom: 8,
   },
   userPhoto: {
     width: 40,

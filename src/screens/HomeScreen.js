@@ -1,14 +1,15 @@
+// HomeScreen.js
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView, Alert, TextInput, Button as RNButton, Text } from 'react-native';
-import { Provider as PaperProvider, Searchbar, FAB, Button, Avatar, useTheme } from 'react-native-paper';
+import { View, StyleSheet, ScrollView, Alert, TextInput, Button as RNButton } from 'react-native';
+import { Provider as PaperProvider, Searchbar, FAB, Button, Avatar, useTheme, Text } from 'react-native-paper';
 import { firestore, auth } from '../services/firebase';
-import { cities } from '../services/cities';
 import { getRandomImage } from '../services/unsplash';
 import CustomAppBar from '../components/CustomAppBar';
 import UserList from '../components/UserList';
 import ListingCard from '../components/ListingCard';
 import MapSection from '../components/MapSection';
-import TabsComponent from '../components/TabsComponent'; // Import the new Tabs component
+import TabsComponent from '../components/TabsComponent';
+import MatchingItinerariesComponent from '../components/MatchingItinerariesComponent'; // Import the new MatchingItinerariesComponent
 import theme from '../../theme';
 
 const DEFAULT_IMAGE = 'https://plus.unsplash.com/premium_photo-1683800241997-a387bacbf06b?q=80&w=1287&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D';
@@ -16,11 +17,11 @@ const DEFAULT_IMAGE = 'https://plus.unsplash.com/premium_photo-1683800241997-a38
 const HomeScreen = ({ navigation }) => {
   const [latestListings, setLatestListings] = useState([]);
   const [recentUsers, setRecentUsers] = useState([]);
-  const [visible, setVisible] = useState(false);
-  const [city, setCity] = useState('');
-  const [fabOpen, setFabOpen] = useState(false);
   const [query, setQuery] = useState('');
+  const [city, setCity] = useState('');
+  const [visible, setVisible] = useState(false);
   const [userProfilePhoto, setUserProfilePhoto] = useState(null);
+  const [fabOpen, setFabOpen] = useState(false); // Ensure this state is defined
   const currentUser = auth.currentUser;
   const { colors } = useTheme();
 
@@ -118,25 +119,7 @@ const HomeScreen = ({ navigation }) => {
           ))}
           <Text style={styles.subtitle}>Sharing around me</Text>
           <MapSection />
-          <View style={styles.inputContainer}>
-            <TextInput
-              placeholder="Enter City"
-              value={city}
-              onChangeText={setCity}
-              style={styles.input}
-            />
-            <RNButton title="Select City" onPress={() => setVisible(true)} />
-            {visible && (
-              <View style={styles.menu}>
-                {cities.map((city) => (
-                  <RNButton key={city.value} title={city.label} onPress={() => { setCity(city.value); setVisible(false); }} />
-                ))}
-              </View>
-            )}
-            <Button mode="contained" onPress={handleNavigate} style={styles.button}>
-              View Matching Itineraries
-            </Button>
-          </View>
+          <MatchingItinerariesComponent navigation={navigation} />
 
           <Text style={styles.subtitle}>Latest Listings</Text>
           {latestListings.map(listing => (

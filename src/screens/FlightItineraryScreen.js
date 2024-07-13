@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { View, StyleSheet, Alert, Animated, ImageBackground } from 'react-native';
 import { Text, TextInput, Button, Menu, Provider as PaperProvider } from 'react-native-paper';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { firestore, auth } from '../services/firebase';
-import { cities } from '../services/cities'; // Adjust the path as needed
+import { airports } from '../services/airports'; // Adjust the path as needed
 import axios from 'axios';
 
 const UNSPLASH_ACCESS_KEY = 'Y9tdu1sdQdRJV4zwTDqLsSxT9-yJbuud6msoTTMAu_Lg'; // Replace with your Unsplash Access Key
@@ -14,8 +14,8 @@ const FlightItineraryScreen = ({ navigation }) => {
     flightNumber: '',
     date: new Date(),
     arrivalTime: new Date(), // Initialize with a valid Date object
-    departureCity: '',
-    arrivalCity: '',
+    departureAirport: '',
+    arrivalAirport: '',
     departureCoords: { latitude: 0, longitude: 0 },
     arrivalCoords: { latitude: 0, longitude: 0 },
   });
@@ -38,7 +38,7 @@ const FlightItineraryScreen = ({ navigation }) => {
   };
 
   const handleShare = () => {
-    if (!itinerary.flightNumber || !itinerary.arrivalTime || !itinerary.departureCity || !itinerary.arrivalCity) {
+    if (!itinerary.flightNumber || !itinerary.arrivalTime || !itinerary.departureAirport || !itinerary.arrivalAirport) {
       Alert.alert("Missing Information", "Please fill in all the fields.");
       return;
     }
@@ -66,9 +66,9 @@ const FlightItineraryScreen = ({ navigation }) => {
     }
   };
 
-  const fetchBackgroundImage = (city) => {
+  const fetchBackgroundImage = (airport) => {
     axios.get(`https://api.unsplash.com/photos/random`, {
-      params: { query: city, client_id: UNSPLASH_ACCESS_KEY },
+      params: { query: airport, client_id: UNSPLASH_ACCESS_KEY },
     })
     .then(response => {
       setBackgroundImage(response.data.urls.regular);
@@ -80,11 +80,11 @@ const FlightItineraryScreen = ({ navigation }) => {
   };
 
   useEffect(() => {
-    if (itinerary.departureCity || itinerary.arrivalCity) {
-      const city = itinerary.departureCity || itinerary.arrivalCity;
-      fetchBackgroundImage(city);
+    if (itinerary.departureAirport || itinerary.arrivalAirport) {
+      const airport = itinerary.departureAirport || itinerary.arrivalAirport;
+      fetchBackgroundImage(airport);
     }
-  }, [itinerary.departureCity, itinerary.arrivalCity]);
+  }, [itinerary.departureAirport, itinerary.arrivalAirport]);
 
   // Animation setup
   const fadeAnim = useRef(new Animated.Value(0)).current; // Initial value for opacity: 0
@@ -110,20 +110,20 @@ const FlightItineraryScreen = ({ navigation }) => {
     ).start();
   }, [fadeAnim, slideAnim]);
 
-  const handleCitySelect = (city, type) => {
-    const selectedCity = cities.find(c => c.label === city);
+  const handleAirportSelect = (airport, type) => {
+    const selectedAirport = airports.find(a => a.label === airport);
     if (type === 'departure') {
       setItinerary({
         ...itinerary,
-        departureCity: city,
-        departureCoords: { latitude: selectedCity.latitude, longitude: selectedCity.longitude },
+        departureAirport: selectedAirport.value,
+        departureCoords: { latitude: selectedAirport.latitude, longitude: selectedAirport.longitude },
       });
       setDepartureMenuVisible(false);
     } else {
       setItinerary({
         ...itinerary,
-        arrivalCity: city,
-        arrivalCoords: { latitude: selectedCity.latitude, longitude: selectedCity.longitude },
+        arrivalAirport: selectedAirport.value,
+        arrivalCoords: { latitude: selectedAirport.latitude, longitude: selectedAirport.longitude },
       });
       setArrivalMenuVisible(false);
     }
@@ -170,15 +170,15 @@ const FlightItineraryScreen = ({ navigation }) => {
               onDismiss={() => setDepartureMenuVisible(false)}
               anchor={
                 <Button mode="outlined" onPress={() => setDepartureMenuVisible(true)} style={styles.input}>
-                  {itinerary.departureCity || 'Select Departure City'}
+                  {itinerary.departureAirport || 'Select Departure Airport'}
                 </Button>
               }
             >
-              {cities.map((city) => (
+              {airports.map((airport) => (
                 <Menu.Item
-                  key={city.value}
-                  onPress={() => handleCitySelect(city.label, 'departure')}
-                  title={city.label}
+                  key={airport.value}
+                  onPress={() => handleAirportSelect(airport.label, 'departure')}
+                  title={airport.label}
                 />
               ))}
             </Menu>
@@ -187,20 +187,20 @@ const FlightItineraryScreen = ({ navigation }) => {
               onDismiss={() => setArrivalMenuVisible(false)}
               anchor={
                 <Button mode="outlined" onPress={() => setArrivalMenuVisible(true)} style={styles.input}>
-                  {itinerary.arrivalCity || 'Select Arrival City'}
+                  {itinerary.arrivalAirport || 'Select Arrival Airport'}
                 </Button>
               }
             >
-              {cities.map((city) => (
+              {airports.map((airport) => (
                 <Menu.Item
-                  key={city.value}
-                  onPress={() => handleCitySelect(city.label, 'arrival')}
-                  title={city.label}
+                  key={airport.value}
+                  onPress={() => handleAirportSelect(airport.label, 'arrival')}
+                  title={airport.label}
                 />
               ))}
             </Menu>
-            <Text style={styles.infoText}>Departure City: {itinerary.departureCity}</Text>
-            <Text style={styles.infoText}>Arrival City: {itinerary.arrivalCity}</Text>
+            <Text style={styles.infoText}>Departure Airport: {itinerary.departureAirport}</Text>
+            <Text style={styles.infoText}>Arrival Airport: {itinerary.arrivalAirport}</Text>
             <Button mode="contained" onPress={handleShare} style={styles.button}>
               Share Itinerary
             </Button>
