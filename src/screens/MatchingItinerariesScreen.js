@@ -22,7 +22,7 @@ const MatchingItinerariesScreen = ({ route, navigation }) => {
   }, [airport]);
 
   const contactUser = (userId) => {
-    navigation.navigate('ChatScreen', { userId });
+    navigation.navigate('MessageScreen', { userId });
   };
 
   const formatDate = (timestamp) => {

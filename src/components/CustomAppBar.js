@@ -18,7 +18,7 @@ const CustomAppBar = ({ navigation, userProfilePhoto }) => {
         onPress={() => navigation.navigate('Messenger', { userId: 'exampleUserId' })}
       />
       <IconButton
-        icon="camera"
+        icon="chat-processing-outline"
         size={30}
         onPress={() => navigation.navigate('MessagesList', { userId: 'exampleUserId' })}
       />
