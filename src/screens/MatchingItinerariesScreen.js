@@ -22,8 +22,7 @@ const MatchingItinerariesScreen = ({ route, navigation }) => {
   }, [airport]);
 
   const contactUser = (userId) => {
-    // Implement the logic to contact the user via messenger or chat
-    Alert.alert("Contact", "Feature to contact the user is under development.");
+    navigation.navigate('ChatScreen', { userId });
   };
 
   const formatDate = (timestamp) => {
@@ -61,8 +60,10 @@ const MatchingItinerariesScreen = ({ route, navigation }) => {
               <Text style={styles.detailText}>Duration: {item.duration}</Text>
             </Card.Content>
             <Card.Actions>
-              {item.userId !== auth.currentUser?.uid && (
+              {item.userId !== auth.currentUser?.uid ? (
                 <Button onPress={() => contactUser(item.userId)}>Contact</Button>
+              ) : (
+                <Button disabled>Your Itinerary</Button>
               )}
             </Card.Actions>
           </Card>

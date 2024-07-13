@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Alert, FlatList } from 'react-native';
+import { View, StyleSheet, Alert, FlatList, ScrollView } from 'react-native';
 import { Text, Button, List, Divider, Avatar, Switch } from 'react-native-paper';
 import { auth, firestore } from '../services/firebase';
 
@@ -91,7 +91,7 @@ const ProfileScreen = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
       {user && (
         <View style={styles.profileHeader}>
           <Avatar.Image size={80} source={{ uri: user.photoURL }} />
@@ -118,6 +118,7 @@ const ProfileScreen = ({ navigation }) => {
           />
         )}
       />
+      <Divider />
       <View style={styles.hitchhikerToggleContainer}>
         <Text style={styles.hitchhikerToggleLabel}>Hitchhiker Feature</Text>
         <Switch value={isHitchhiker} onValueChange={handleToggleHitchhiker} />
@@ -142,7 +143,29 @@ const ProfileScreen = ({ navigation }) => {
       <Button mode="outlined" onPress={handleLogout} style={styles.button}>
         Logout
       </Button>
-    </View>
+      <Divider />
+      <Text style={styles.supportTitle}>Support</Text>
+      <List.Item
+        title="How it Works"
+        left={props => <List.Icon {...props} icon="information" />}
+        onPress={() => Alert.alert('How it Works', 'This section explains how the app works.')}
+      />
+      <List.Item
+        title="Give Us Feedback"
+        left={props => <List.Icon {...props} icon="message" />}
+        onPress={() => Alert.alert('Give Us Feedback', 'This section allows you to provide feedback.')}
+      />
+      <List.Item
+        title="Report a Concern"
+        left={props => <List.Icon {...props} icon="alert" />}
+        onPress={() => Alert.alert('Report a Concern', 'This section allows you to report a concern.')}
+      />
+      <List.Item
+        title="Visit the Help Centre"
+        left={props => <List.Icon {...props} icon="help-circle" />}
+        onPress={() => Alert.alert('Visit the Help Centre', 'This section directs you to the help centre.')}
+      />
+    </ScrollView>
   );
 };
 
@@ -189,6 +212,11 @@ const styles = StyleSheet.create({
   },
   button: {
     marginVertical: 8,
+  },
+  supportTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginVertical: 16,
   },
 });
 
