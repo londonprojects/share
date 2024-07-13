@@ -1,7 +1,6 @@
-// HomeScreen.js
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, ScrollView, Alert, TextInput, Button as RNButton, Text } from 'react-native';
-import { Provider as PaperProvider, Searchbar, FAB, Button } from 'react-native-paper';
+import { Provider as PaperProvider, Searchbar, FAB, Button, Avatar, useTheme } from 'react-native-paper';
 import { firestore, auth } from '../services/firebase';
 import { cities } from '../services/cities';
 import { getRandomImage } from '../services/unsplash';
@@ -9,28 +8,10 @@ import CustomAppBar from '../components/CustomAppBar';
 import UserList from '../components/UserList';
 import ListingCard from '../components/ListingCard';
 import MapSection from '../components/MapSection';
-import { DefaultTheme } from 'react-native-paper';
+import TabsComponent from '../components/TabsComponent'; // Import the new Tabs component
+import theme from '../../theme';
 
-const theme = {
-  ...DefaultTheme,
-  colors: {
-    ...DefaultTheme.colors,
-    primary: '#00bcd4',
-    accent: '#00bcd4',
-    background: '#ffffff',
-    surface: '#f5f5f5',
-    text: '#212121',
-    disabled: '#bdbdbd',
-    placeholder: '#757575',
-    backdrop: '#000000',
-    notification: '#ff80ab',
-    error: '#d32f2f',
-    onPrimary: '#ffffff',
-    onSurface: '#212121',
-    onBackground: '#212121',
-    onError: '#ffffff',
-  },
-};
+const DEFAULT_IMAGE = 'https://plus.unsplash.com/premium_photo-1683800241997-a387bacbf06b?q=80&w=1287&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D';
 
 const HomeScreen = ({ navigation }) => {
   const [latestListings, setLatestListings] = useState([]);
@@ -40,7 +21,8 @@ const HomeScreen = ({ navigation }) => {
   const [fabOpen, setFabOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [userProfilePhoto, setUserProfilePhoto] = useState(null);
-  const currentUser = auth.currentUser; // Fetch current user once here
+  const currentUser = auth.currentUser;
+  const { colors } = useTheme();
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -51,15 +33,28 @@ const HomeScreen = ({ navigation }) => {
 
     const fetchImageAndSetState = async (doc, query) => {
       const data = { id: doc.id, ...doc.data() };
-      data.imageUrl = await getRandomImage(query) || DEFAULT_IMAGE;
+      try {
+        const imageUrl = await getRandomImage(query);
+        data.imageUrl = imageUrl || DEFAULT_IMAGE;
+      } catch (error) {
+        console.error('Error fetching image from Unsplash:', error);
+        data.imageUrl = DEFAULT_IMAGE;
+      }
       return data;
     };
 
     const fetchRecentUsers = async () => {
-      const usersSnapshot = await firestore.collection('users').orderBy('lastPosted', 'desc').limit(5).get();
-      const usersList = usersSnapshot.docs.map(doc => doc.data());
-      if (usersList.length > 0) {
-        setRecentUsers(usersList);
+      try {
+        const usersSnapshot = await firestore.collection('users').orderBy('lastPosted', 'desc').limit(5).get();
+        const usersList = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        console.log('Fetched recent users:', usersList); // Debugging line
+        if (usersList.length > 0) {
+          setRecentUsers(usersList);
+        } else {
+          console.log('No recent users found.');
+        }
+      } catch (error) {
+        console.error('Error fetching recent users:', error);
       }
     };
 
@@ -115,6 +110,12 @@ const HomeScreen = ({ navigation }) => {
         />
         <ScrollView contentContainerStyle={styles.scrollView}>
           <UserList recentUsers={recentUsers} title="Nearby Travelers" />
+          {recentUsers.map(user => (
+            <View key={user.id} style={styles.recentUserContainer}>
+              <Avatar.Image size={80} source={{ uri: user.photoURL || DEFAULT_IMAGE }} />
+              <Text style={styles.userName}>{user.displayName}</Text>
+            </View>
+          ))}
           <Text style={styles.subtitle}>Sharing around me</Text>
           <MapSection />
           <View style={styles.inputContainer}>
@@ -149,6 +150,7 @@ const HomeScreen = ({ navigation }) => {
             />
           ))}
         </ScrollView>
+        <TabsComponent navigation={navigation} />
         <FAB.Group
           open={fabOpen}
           icon={fabOpen ? 'close' : 'plus'}
@@ -208,6 +210,15 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 5,
     elevation: 2,
+  },
+  recentUserContainer: {
+    alignItems: 'center',
+    marginVertical: 8,
+  },
+  userName: {
+    marginTop: 8,
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });
 

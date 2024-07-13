@@ -11,6 +11,21 @@ const ListingCard = ({ listing, currentUser, userProfilePhoto, navigation, notif
     return 'Unknown date';
   };
 
+  const getListingTypeScreen = (type) => {
+    switch (type) {
+      case 'Ride':
+        return 'RidesScreen';
+      case 'Airbnb':
+        return 'AirbnbsScreen';
+      case 'Item':
+        return 'ItemsScreen';
+      case 'Experience':
+        return 'ExperiencesScreen';
+      default:
+        return 'HomeScreen';
+    }
+  };
+
   return (
     <Card style={styles.card}>
       <Card.Cover source={{ uri: listing.imageUrl }} style={styles.cardImage} />
@@ -21,16 +36,21 @@ const ListingCard = ({ listing, currentUser, userProfilePhoto, navigation, notif
             <Image source={{ uri: userProfilePhoto }} style={styles.userPhoto} />
           )}
           <View>
-            <Text style={styles.cardTitle}>{listing.title}</Text>
+            <Text style={styles.cardTitle}>{listing.title || listing.name || listing.destination || listing.location}</Text>
             <Text style={styles.userName}>{listing.userName}</Text>
             <Text style={styles.cardDate}>{formatDate(listing.dateListed)}</Text>
           </View>
         </View>
         <Text style={styles.cardDetails}>Price: ${listing.price}</Text>
-        <Text style={styles.cardDetails}>Description: {listing.description}</Text>
+        {listing.numSpaces && <Text style={styles.cardDetails}>Number of Spaces: {listing.numSpaces}</Text>}
+        {listing.numRooms && <Text style={styles.cardDetails}>Number of Rooms: {listing.numRooms}</Text>}
+        {listing.amenities && <Text style={styles.cardDetails}>Amenities: {Object.keys(listing.amenities).filter(key => listing.amenities[key]).join(', ')}</Text>}
+        {listing.timeLimited && <Text style={styles.cardDetails}>Time Limited</Text>}
+        {listing.description && <Text style={styles.cardDetails}>Description: {listing.description}</Text>}
+        <Text style={styles.cardDate}>Date: {formatDate(listing.date)}</Text>
       </Card.Content>
       <Card.Actions>
-        <Button mode="text" onPress={() => navigation.navigate(`${listing.type}Screen`)}>View All</Button>
+        <Button mode="text" onPress={() => navigation.navigate(getListingTypeScreen(listing.type))}>View All</Button>
         {listing.userId !== currentUser?.uid && (
           <IconButton icon="thumb-up" onPress={() => notifyOwner(listing.userId, listing.id)} />
         )}

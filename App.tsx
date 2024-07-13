@@ -6,6 +6,7 @@ import { Provider as PaperProvider, DefaultTheme } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { enableScreens } from 'react-native-screens';
 import HitchhikeRequestScreen from './src/screens/HitchhikeRequestScreen';
+import theme from './theme';
 
 enableScreens();
 
@@ -17,6 +18,7 @@ import RidesScreen from './src/screens/RidesScreen';
 import AirbnbShareScreen from './src/screens/AirbnbShareScreen';
 import ScheduleScreen from './src/screens/ScheduleScreen';
 import ItemShareScreen from './src/screens/ItemShareScreen';
+import ItemShare from './src/screens/ItemScreen';
 import ExperienceShareScreen from './src/screens/ExperienceShareScreen';
 import AuthScreen from './src/screens/AuthScreen';
 import SharingScreen from './src/screens/SharingScreen';
@@ -37,26 +39,6 @@ import MessagesDetailsScreen from './src/screens/MessageDetailScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import UserProfileScreen from './src/screens/UserProfileScreen';
 
-const theme = {
-  ...DefaultTheme,
-  colors: {
-    ...DefaultTheme.colors,
-    primary: '#00bcd4',        // Primary color
-    accent: '#00bcd4',         // Accent color
-    background: '#ffffff',     // Background color
-    surface: '#f5f5f5',        // Surface color
-    text: '#212121',           // Text color
-    disabled: '#bdbdbd',       // Disabled color
-    placeholder: '#757575',    // Placeholder color
-    backdrop: '#000000',       // Backdrop color
-    notification: '#ff80ab',   // Notification color
-    error: '#d32f2f',          // Error color
-    onPrimary: '#ffffff',      // Text color on primary color
-    onSurface: '#212121',      // Text color on surface color
-    onBackground: '#212121',   // Text color on background color
-    onError: '#ffffff',        // Text color on error color
-  },
-};
 
 const App = () => {
   useEffect(() => {
@@ -103,7 +85,8 @@ const App = () => {
             <Stack.Screen name="AirbnbShare" component={AirbnbShareScreen} />
             <Stack.Screen name="SignUp" component={SignUpScreen} options={{ headerShown: false }} />
             <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} options={{ headerShown: false }} />
-            <Stack.Screen name="ItemShare" component={ItemShareScreen} />
+            <Stack.Screen name="ItemShareScreen" component={ItemShareScreen} />
+            <Stack.Screen name="ItemShare" component={ItemShare} />
             <Stack.Screen name="ExperienceShare" component={ExperienceShareScreen} />
             <Stack.Screen name="Schedule" component={ScheduleScreen} />
             <Stack.Screen 
