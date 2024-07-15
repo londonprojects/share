@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { View, FlatList, StyleSheet, Image, Alert, ScrollView, TouchableOpacity, TextInput } from 'react-native';
-import { Text, Card, Searchbar, IconButton, Appbar, Avatar, Badge, Button, Portal, Dialog, Paragraph, ActivityIndicator } from 'react-native-paper';
+import { Text, Card, Searchbar, IconButton, Avatar, Badge, Button, Portal, Dialog, Paragraph, ActivityIndicator, Provider as PaperProvider } from 'react-native-paper';
 import { firestore, auth } from '../services/firebase';
 import axios from 'axios';
+import CustomAppBar from '../components/CustomAppBar'; // Import CustomAppBar
+import TabsComponent from '../components/TabsComponent'; // Import TabsComponent
 
 const UNSPLASH_ACCESS_KEY = '9tdu1sdQdRJV4zwTDqLsSxT9-yJbuud6msoTTMAu_Lg'; // Replace with your Unsplash Access Key
 const DEFAULT_IMAGE = 'https://images.unsplash.com/photo-1716671827397-8948fb218779?q=80&w=1287&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'; // Replace with your default image URL
@@ -18,12 +20,12 @@ function ExperienceShareScreen({ navigation }) {
   const [dialogVisible, setDialogVisible] = useState(false);
   const [editDialogVisible, setEditDialogVisible] = useState(false);
   const [editExperienceDetails, setEditExperienceDetails] = useState({ name: '', price: '', description: '' });
-  const [userProfilePhoto, setUserProfilePhoto] = useState(null); // Add state for user profile photo
+  const [userProfilePhoto, setUserProfilePhoto] = useState(null);
 
   useEffect(() => {
     const user = auth.currentUser;
     if (user) {
-      setUserProfilePhoto(user.photoURL); // Set the user's profile photo URL
+      setUserProfilePhoto(user.photoURL);
     }
 
     const unsubscribeExperiences = firestore.collection('experiences').onSnapshot(snapshot => {
@@ -82,7 +84,6 @@ function ExperienceShareScreen({ navigation }) {
         })
       );
 
-      // Fetch user details separately
       const updatedExperiencesWithUserDetails = await Promise.all(
         updatedExperiences.map(async (experience) => {
           try {
@@ -119,7 +120,6 @@ function ExperienceShareScreen({ navigation }) {
 
   const notifyOwner = (ownerId, listingId) => {
     Alert.alert("Notification Sent", "You have notified the owner of the listing.");
-    // Implement actual notification logic
   };
 
   const handleMessage = (userId) => {
@@ -166,119 +166,111 @@ function ExperienceShareScreen({ navigation }) {
   };
 
   return (
-    <View style={styles.container}>
-      <Appbar.Header style={styles.appbar}>
-        <Appbar.BackAction onPress={() => navigation.goBack()} />
-        <Appbar.Content title="" />
-        <Appbar.Action icon="map" onPress={() => navigation.navigate('MapScreen')} />
-        {userProfilePhoto ? (
-          <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
-            <Image source={{ uri: userProfilePhoto }} style={styles.profilePhoto} />
-          </TouchableOpacity>
+    <PaperProvider>
+      <View style={styles.container}>
+        <CustomAppBar navigation={navigation} userProfilePhoto={userProfilePhoto} />
+        {loading ? (
+          <ActivityIndicator style={styles.loading} />
         ) : (
-          <Appbar.Action icon="account" onPress={() => navigation.navigate('Profile')} />
-        )}
-      </Appbar.Header>
-      {loading ? (
-        <ActivityIndicator style={styles.loading} />
-      ) : (
-        <>
-          <View style={styles.avatarContainer}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {recentUsers.map((user, index) => (
-                <Avatar.Image key={index} size={50} source={{ uri: user.photoURL || DEFAULT_IMAGE }} style={styles.avatar} />
-              ))}
-            </ScrollView>
-          </View>
-          <Searchbar
-            placeholder="Search"
-            onChangeText={handleSearch}
-            value={query}
-            style={styles.searchbar}
-          />
-          <FlatList
-            data={filteredExperiences}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <Card style={styles.card} onPress={() => handleCardPress(item)}>
-                <Card.Cover source={{ uri: item.imageUrl || DEFAULT_IMAGE }} style={styles.cardImage} />
-                <Card.Content>
-                  <View style={styles.experienceHeader}>
-                    <Image source={{ uri: item.userPhoto }} style={styles.userPhoto} />
-                    <View>
-                      <Text style={styles.cardTitle}>{item.name}</Text>
-                      <Text style={styles.userName}>{item.userName}</Text>
-                      <Text style={styles.cardDate}>{new Date(item.dateListed.seconds * 1000).toDateString()}</Text>
+          <>
+            <View style={styles.avatarContainer}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {recentUsers.map((user, index) => (
+                  <Avatar.Image key={index} size={50} source={{ uri: user.photoURL || DEFAULT_IMAGE }} style={styles.avatar} />
+                ))}
+              </ScrollView>
+            </View>
+            <Searchbar
+              placeholder="Search Experiences"
+              onChangeText={handleSearch}
+              value={query}
+              style={styles.searchbar}
+            />
+            <FlatList
+              data={filteredExperiences}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                <Card style={styles.card} onPress={() => handleCardPress(item)}>
+                  <Card.Cover source={{ uri: item.imageUrl || DEFAULT_IMAGE }} style={styles.cardImage} />
+                  <Card.Content>
+                    <View style={styles.experienceHeader}>
+                      <Image source={{ uri: item.userPhoto }} style={styles.userPhoto} />
+                      <View>
+                        <Text style={styles.cardTitle}>{item.name}</Text>
+                        <Text style={styles.userName}>{item.userName}</Text>
+                        <Text style={styles.cardDate}>{new Date(item.dateListed.seconds * 1000).toDateString()}</Text>
+                      </View>
+                      {messages[item.userId] && (
+                        <Badge style={styles.badge}>{messages[item.userId].length}</Badge>
+                      )}
                     </View>
-                    {messages[item.userId] && (
-                      <Badge style={styles.badge}>{messages[item.userId].length}</Badge>
+                    <Text style={styles.experienceDetails}>Price: ${item.price}</Text>
+                    <Text style={styles.experienceDetails}>Description: {item.description}</Text>
+                  </Card.Content>
+                  <Card.Actions>
+                    <IconButton icon="thumb-up" onPress={() => notifyOwner(item.userId, item.id)} />
+                    <IconButton icon="message" onPress={() => handleMessage(item.userId)} />
+                    {item.userId === auth.currentUser?.uid && (
+                      <>
+                        <IconButton icon="pencil" onPress={() => handleEditCardPress(item)} />
+                        <IconButton icon="delete" onPress={() => handleDelete(item.id)} />
+                      </>
                     )}
-                  </View>
-                  <Text style={styles.experienceDetails}>Price: ${item.price}</Text>
-                  <Text style={styles.experienceDetails}>Description: {item.description}</Text>
-                </Card.Content>
-                <Card.Actions>
-                  <IconButton icon="thumb-up" onPress={() => notifyOwner(item.userId, item.id)} />
-                  <IconButton icon="message" onPress={() => handleMessage(item.userId)} />
-                  {item.userId === auth.currentUser?.uid && (
-                    <>
-                      <IconButton icon="pencil" onPress={() => handleEditCardPress(item)} />
-                      <IconButton icon="delete" onPress={() => handleDelete(item.id)} />
-                    </>
-                  )}
-                </Card.Actions>
-              </Card>
-            )}
-          />
-        </>
-      )}
-      <Portal>
-        <Dialog visible={dialogVisible} onDismiss={hideDialog}>
-          <Dialog.Title>Experience Details</Dialog.Title>
-          <Dialog.Content>
-            {selectedExperience && (
-              <>
-                <Paragraph>Name: {selectedExperience.name}</Paragraph>
-                <Paragraph>Price: ${selectedExperience.price}</Paragraph>
-                <Paragraph>Description: {selectedExperience.description}</Paragraph>
-                <Paragraph>Date Listed: {new Date(selectedExperience.dateListed.seconds * 1000).toDateString()}</Paragraph>
-              </>
-            )}
-          </Dialog.Content>
-          <Dialog.Actions>
-            <Button onPress={hideDialog}>Close</Button>
-          </Dialog.Actions>
-        </Dialog>
-        <Dialog visible={editDialogVisible} onDismiss={hideEditDialog}>
-          <Dialog.Title>Edit Experience Details</Dialog.Title>
-          <Dialog.Content>
-            <TextInput
-              label="Name"
-              value={editExperienceDetails.name}
-              onChangeText={(text) => handleEditChange('name', text)}
-              style={styles.input}
+                  </Card.Actions>
+                </Card>
+              )}
             />
-            <TextInput
-              label="Price"
-              value={editExperienceDetails.price}
-              onChangeText={(text) => handleEditChange('price', text)}
-              style={styles.input}
-              keyboardType="numeric"
-            />
-            <TextInput
-              label="Description"
-              value={editExperienceDetails.description}
-              onChangeText={(text) => handleEditChange('description', text)}
-              style={styles.input}
-            />
-          </Dialog.Content>
-          <Dialog.Actions>
-            <Button onPress={hideEditDialog}>Cancel</Button>
-            <Button onPress={handleSaveEdit}>Save</Button>
-          </Dialog.Actions>
-        </Dialog>
-      </Portal>
-    </View>
+          </>
+        )}
+        <Portal>
+          <Dialog visible={dialogVisible} onDismiss={hideDialog}>
+            <Dialog.Title>Experience Details</Dialog.Title>
+            <Dialog.Content>
+              {selectedExperience && (
+                <>
+                  <Paragraph>Name: {selectedExperience.name}</Paragraph>
+                  <Paragraph>Price: ${selectedExperience.price}</Paragraph>
+                  <Paragraph>Description: {selectedExperience.description}</Paragraph>
+                  <Paragraph>Date Listed: {new Date(selectedExperience.dateListed.seconds * 1000).toDateString()}</Paragraph>
+                </>
+              )}
+            </Dialog.Content>
+            <Dialog.Actions>
+              <Button onPress={hideDialog}>Close</Button>
+            </Dialog.Actions>
+          </Dialog>
+          <Dialog visible={editDialogVisible} onDismiss={hideEditDialog}>
+            <Dialog.Title>Edit Experience Details</Dialog.Title>
+            <Dialog.Content>
+              <TextInput
+                label="Name"
+                value={editExperienceDetails.name}
+                onChangeText={(text) => handleEditChange('name', text)}
+                style={styles.input}
+              />
+              <TextInput
+                label="Price"
+                value={editExperienceDetails.price}
+                onChangeText={(text) => handleEditChange('price', text)}
+                style={styles.input}
+                keyboardType="numeric"
+              />
+              <TextInput
+                label="Description"
+                value={editExperienceDetails.description}
+                onChangeText={(text) => handleEditChange('description', text)}
+                style={styles.input}
+              />
+            </Dialog.Content>
+            <Dialog.Actions>
+              <Button onPress={hideEditDialog}>Cancel</Button>
+              <Button onPress={handleSaveEdit}>Save</Button>
+            </Dialog.Actions>
+          </Dialog>
+        </Portal>
+        <TabsComponent navigation={navigation} />
+      </View>
+    </PaperProvider>
   );
 }
 

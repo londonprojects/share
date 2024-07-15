@@ -1,4 +1,4 @@
-package com.share
+package com.currentlyremote.shareapp
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate

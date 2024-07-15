@@ -133,10 +133,10 @@ const App = () => {
             <Stack.Screen name="AirbnbShare" component={AirbnbShareScreen} />
             <Stack.Screen name="SignUp" component={SignUpScreen} options={{ headerShown: false }} />
             <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} options={{ headerShown: false }} />
-            <Stack.Screen name="ItemShareScreen" component={ItemShareScreen} />
+            <Stack.Screen name="ItemShareScreen" component={ItemShareScreen} options={{ headerShown: false }} />
             <Stack.Screen name="ItemShare" component={ItemShare} />
             <Stack.Screen name="ExperienceShareScreen" component={ExperienceShareScreen} />
-            <Stack.Screen name="ExperienceShare" component={ExperienceScreen} />
+            <Stack.Screen name="ExperienceShare" component={ExperienceScreen} options={{ headerShown: false }} />
             <Stack.Screen name="Schedule" component={ScheduleScreen} />
             <Stack.Screen 
               name="Profile" 

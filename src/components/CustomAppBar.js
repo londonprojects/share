@@ -2,11 +2,19 @@
 import React from 'react';
 import { View, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { Appbar, IconButton } from 'react-native-paper';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const CustomAppBar = ({ navigation, userProfilePhoto }) => {
   return (
     <Appbar.Header style={styles.appbar}>
-      <Appbar.Content title="Hello!" />
+      <IconButton
+        icon={({ size, color }) => (
+          <MaterialCommunityIcons name="home-outline" size={size} color={color} />
+        )}
+        size={30}
+        onPress={() => navigation.navigate('Home')}
+      />
+      <Appbar.Content title="" />
       <IconButton
         icon="account-group"
         size={30}

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Alert, FlatList, ScrollView } from 'react-native';
+import { View, StyleSheet, Alert, FlatList, ScrollView, TouchableOpacity, Image, RefreshControl } from 'react-native';
 import { Text, Button, List, Divider, Avatar, Switch } from 'react-native-paper';
-import { auth, firestore } from '../services/firebase';
+import { auth, firestore, storage } from '../services/firebase';
+import ImagePicker from 'react-native-image-picker';
 
 const ProfileScreen = ({ navigation }) => {
   const [user, setUser] = useState(null);
@@ -9,6 +10,7 @@ const ProfileScreen = ({ navigation }) => {
   const [userStats, setUserStats] = useState({ rides: 0, airbnbs: 0, items: 0, experiences: 0 });
   const [isHitchhiker, setIsHitchhiker] = useState(false);
   const [interestedUsers, setInterestedUsers] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     const currentUser = auth.currentUser;
@@ -90,11 +92,78 @@ const ProfileScreen = ({ navigation }) => {
     return 'Unknown date';
   };
 
+  const uploadImage = async (uri, userId) => {
+    const response = await fetch(uri);
+    const blob = await response.blob();
+    const ref = storage().ref().child(`profilePictures/${userId}`);
+    await ref.put(blob);
+
+    const downloadURL = await ref.getDownloadURL();
+    return downloadURL;
+  };
+
+  const handleSelectPhoto = () => {
+    const options = {
+      title: 'Select Avatar',
+      storageOptions: {
+        skipBackup: true,
+        path: 'images',
+      },
+    };
+
+    ImagePicker.showImagePicker(options, async (response) => {
+      if (response.didCancel) {
+        console.log('User cancelled image picker');
+      } else if (response.error) {
+        console.log('ImagePicker Error: ', response.error);
+      } else if (response.customButton) {
+        console.log('User tapped custom button: ', response.customButton);
+      } else {
+        const source = { uri: response.uri };
+        const downloadURL = await uploadImage(response.uri, user.uid);
+        
+        await auth.currentUser.updateProfile({
+          photoURL: downloadURL,
+        });
+
+        setUser({
+          ...user,
+          photoURL: downloadURL,
+        });
+      }
+    });
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    const currentUser = auth.currentUser;
+    if (currentUser) {
+      await fetchUserListings(currentUser.uid);
+      await fetchUserHitchhikerStatus(currentUser.uid);
+      await fetchInterestedUsers(currentUser.uid);
+    }
+    setRefreshing(false);
+  };
+
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+        />
+      }
+    >
       {user && (
         <View style={styles.profileHeader}>
-          <Avatar.Image size={80} source={{ uri: user.photoURL }} />
+          <TouchableOpacity onPress={handleSelectPhoto}>
+            {user.photoURL ? (
+              <Avatar.Image size={80} source={{ uri: user.photoURL }} />
+            ) : (
+              <Avatar.Icon size={80} icon="account" />
+            )}
+          </TouchableOpacity>
           <Text style={styles.username}>{user.displayName}</Text>
           <Text style={styles.email}>{user.email}</Text>
         </View>

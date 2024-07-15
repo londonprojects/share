@@ -1,6 +1,5 @@
-// HomeScreen.js
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView, Alert, TextInput, Button as RNButton, Image } from 'react-native';
+import { View, StyleSheet, ScrollView, Alert, Image, RefreshControl } from 'react-native';
 import { Provider as PaperProvider, Searchbar, FAB, Button, Avatar, useTheme, Text } from 'react-native-paper';
 import { firestore, auth } from '../services/firebase';
 import { getRandomImage } from '../services/unsplash';
@@ -10,10 +9,11 @@ import ListingCard from '../components/ListingCard';
 import MapSection from '../components/MapSection';
 import TabsComponent from '../components/TabsComponent';
 import MatchingItinerariesComponent from '../components/MatchingItinerariesComponent';
-import { addDummyData } from '../services/dummyData';
 import theme from '../../theme';
 
+const UNSPLASH_ACCESS_KEY = 'your_unsplash_access_key'; // Replace with your Unsplash Access Key
 const DEFAULT_IMAGE = 'https://plus.unsplash.com/premium_photo-1683800241997-a387bacbf06b?q=80&w=1287&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D';
+const NO_ITEMS_IMAGE = 'https://via.placeholder.com/300x200.png?text=No+Items+Shared';
 
 const HomeScreen = ({ navigation }) => {
   const [latestListings, setLatestListings] = useState([]);
@@ -22,77 +22,74 @@ const HomeScreen = ({ navigation }) => {
   const [city, setCity] = useState('');
   const [visible, setVisible] = useState(false);
   const [userProfilePhoto, setUserProfilePhoto] = useState(null);
-  const [fabOpen, setFabOpen] = useState(false); // Ensure this state is defined
+  const [fabOpen, setFabOpen] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const currentUser = auth.currentUser;
   const { colors } = useTheme();
-  const [dataAdded, setDataAdded] = useState(false); // Ensure data is added only once
+
+  const fetchUserProfile = async () => {
+    if (currentUser) {
+      setUserProfilePhoto(currentUser.photoURL);
+    }
+  };
+
+  const fetchImageAndSetState = async (doc, query) => {
+    const data = { id: doc.id, ...doc.data() };
+    try {
+      const imageUrl = await getRandomImage(query);
+      data.imageUrl = imageUrl || DEFAULT_IMAGE;
+    } catch (error) {
+      console.error('Error fetching image from Unsplash:', error);
+      data.imageUrl = DEFAULT_IMAGE;
+    }
+    return data;
+  };
+
+  const fetchRecentUsers = async () => {
+    try {
+      const usersSnapshot = await firestore.collection('users').orderBy('lastPosted', 'desc').limit(5).get();
+      const usersList = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      console.log('Fetched recent users:', usersList);
+      if (usersList.length > 0) {
+        setRecentUsers(usersList);
+      } else {
+        console.log('No recent users found.');
+      }
+    } catch (error) {
+      console.error('Error fetching recent users:', error);
+    }
+  };
+
+  const fetchLatestListings = async () => {
+    const collections = ['rides', 'airbnbs', 'items', 'experiences'];
+    const latestDocs = await Promise.all(
+      collections.map(collection =>
+        firestore.collection(collection).orderBy('dateListed', 'desc').limit(1).get()
+      )
+    );
+
+    const listings = await Promise.all(
+      latestDocs.flatMap(snapshot =>
+        snapshot.docs.map(doc => fetchImageAndSetState(doc, doc.data().name))
+      )
+    );
+
+    setLatestListings(listings);
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchUserProfile();
+    await fetchRecentUsers();
+    await fetchLatestListings();
+    setRefreshing(false);
+  };
 
   useEffect(() => {
-    const fetchUserProfile = async () => {
-      if (currentUser) {
-        setUserProfilePhoto(currentUser.photoURL);
-      }
-    };
-
-    const fetchImageAndSetState = async (doc, query) => {
-      const data = { id: doc.id, ...doc.data() };
-      try {
-        const imageUrl = await getRandomImage(query);
-        data.imageUrl = imageUrl || DEFAULT_IMAGE;
-      } catch (error) {
-        console.error('Error fetching image from Unsplash:', error);
-        data.imageUrl = DEFAULT_IMAGE;
-      }
-      return data;
-    };
-
-    const fetchRecentUsers = async () => {
-      try {
-        const usersSnapshot = await firestore.collection('users').orderBy('lastPosted', 'desc').limit(5).get();
-        const usersList = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        console.log('Fetched recent users:', usersList); // Debugging line
-        if (usersList.length > 0) {
-          setRecentUsers(usersList);
-        } else {
-          console.log('No recent users found.');
-        }
-      } catch (error) {
-        console.error('Error fetching recent users:', error);
-      }
-    };
-
-    const fetchLatestListings = async () => {
-      const collections = ['rides', 'airbnbs', 'items', 'experiences'];
-      const latestDocs = await Promise.all(
-        collections.map(collection =>
-          firestore.collection(collection).orderBy('dateListed', 'desc').limit(1).get()
-        )
-      );
-
-      const listings = await Promise.all(
-        latestDocs.flatMap(snapshot =>
-          snapshot.docs.map(doc => fetchImageAndSetState(doc, doc.data().name))
-        )
-      );
-
-      setLatestListings(listings);
-    };
-
-    const addDataIfNeeded = async () => {
-      const usersSnapshot = await firestore.collection('users').get();
-      if (usersSnapshot.empty) {
-        await addDummyData();
-        setDataAdded(true);
-      }
-    };
-
     fetchUserProfile();
     fetchRecentUsers();
     fetchLatestListings();
-    if (!dataAdded) {
-      addDataIfNeeded();
-    }
-  }, [currentUser, dataAdded]);
+  }, [currentUser]);
 
   const handleSearch = (query) => {
     setQuery(query);
@@ -130,7 +127,10 @@ const HomeScreen = ({ navigation }) => {
           value={query}
           style={styles.searchbar}
         />
-        <ScrollView contentContainerStyle={styles.scrollView}>
+        <ScrollView 
+          contentContainerStyle={styles.scrollView}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        >
           <UserList recentUsers={recentUsers} title="Nearby Travelers" />
           {recentUsers.map(user => (
             <View key={user.id} style={styles.recentUserContainer}>
@@ -142,16 +142,23 @@ const HomeScreen = ({ navigation }) => {
           <MapSection />
           <MatchingItinerariesComponent navigation={navigation} />
           <Text style={styles.subtitle}>Latest Listings</Text>
-          {latestListings.map(listing => (
-            <ListingCard
-              key={listing.id}
-              listing={listing}
-              currentUser={currentUser}
-              userProfilePhoto={userProfilePhoto}
-              navigation={navigation}
-              notifyOwner={notifyOwner}
-            />
-          ))}
+          {latestListings.length > 0 ? (
+            latestListings.map(listing => (
+              <ListingCard
+                key={listing.id}
+                listing={listing}
+                currentUser={currentUser}
+                userProfilePhoto={userProfilePhoto}
+                navigation={navigation}
+                notifyOwner={notifyOwner}
+              />
+            ))
+          ) : (
+            <View style={styles.noItemsContainer}>
+              <Image source={{ uri: NO_ITEMS_IMAGE }} style={styles.noItemsImage} />
+              <Text style={styles.noItemsText}>No items shared yet.</Text>
+            </View>
+          )}
         </ScrollView>
         <TabsComponent navigation={navigation} />
         <FAB.Group
@@ -228,6 +235,20 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
+  },
+  noItemsContainer: {
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  noItemsImage: {
+    width: 300,
+    height: 200,
+  },
+  noItemsText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginTop: 10,
+    textAlign: 'center',
   },
 });
 

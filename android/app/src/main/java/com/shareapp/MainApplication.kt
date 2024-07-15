@@ -1,4 +1,4 @@
-package com.share
+package com.currentlyremote.shareapp
 
 import android.app.Application
 import com.facebook.react.PackageList

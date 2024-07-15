@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, Text } from 'react-native';
-import { Tabs, TabScreen } from 'react-native-paper-tabs';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { Badge } from 'react-native-paper';
 import { firestore, auth } from '../services/firebase';
 
@@ -10,6 +9,7 @@ const CustomTabBar = ({ navigation }) => {
   const [airbnbMessages, setAirbnbMessages] = useState(0);
   const [itemsMessages, setItemsMessages] = useState(0);
   const [experiencesMessages, setExperiencesMessages] = useState(0);
+  const [selectedTab, setSelectedTab] = useState('Rides');
 
   useEffect(() => {
     const fetchMessages = async () => {
@@ -33,56 +33,86 @@ const CustomTabBar = ({ navigation }) => {
     fetchMessages();
   }, []);
 
+  const handleTabPress = (label) => {
+    setSelectedTab(label);
+    switch (label) {
+      case 'Rides':
+        navigation.navigate('RidesScreen');
+        break;
+      case 'Airbnbs':
+        navigation.navigate('AirbnbScreen');
+        break;
+      case 'Items':
+        navigation.navigate('ItemShareScreen');
+        break;
+      case 'Experiences':
+        navigation.navigate('ExperienceShare');
+        break;
+      default:
+        break;
+    }
+  };
+
+  const getTabStyle = (label) => {
+    return selectedTab === label ? styles.selectedTab : styles.tab;
+  };
+
+  const getIconColor = (label) => {
+    return selectedTab === label ? '#6200ea' : '#000';
+  };
+
   return (
     <View style={styles.container}>
-      <Tabs>
-        <TabScreen label="Rides" onPress={() => navigation.navigate('RidesScreen')}>
-          <View style={styles.tabContent}>
-            <View style={styles.iconContainer}>
-              <Icon name="car" size={24} color="#000" style={styles.icon} />
-              {ridesMessages > 0 && <Badge style={styles.badge}>{ridesMessages}</Badge>}
-            </View>
-            <Text style={styles.label}>Rides</Text>
-          </View>
-        </TabScreen>
-        <TabScreen label="Airbnbs" onPress={() => navigation.navigate('AirbnbScreen')}>
-          <View style={styles.tabContent}>
-            <View style={styles.iconContainer}>
-              <Icon name="home" size={24} color="#000" style={styles.icon} />
-              {airbnbMessages > 0 && <Badge style={styles.badge}>{airbnbMessages}</Badge>}
-            </View>
-            <Text style={styles.label}>Airbnbs</Text>
-          </View>
-        </TabScreen>
-        <TabScreen label="Items" onPress={() => navigation.navigate('ItemShareScreen')}>
-          <View style={styles.tabContent}>
-            <View style={styles.iconContainer}>
-              <Icon name="gift" size={24} color="#000" style={styles.icon} />
-              {itemsMessages > 0 && <Badge style={styles.badge}>{itemsMessages}</Badge>}
-            </View>
-            <Text style={styles.label}>Items</Text>
-          </View>
-        </TabScreen>
-        <TabScreen label="Experiences" onPress={() => navigation.navigate('ExperienceShare')}>
-          <View style={styles.tabContent}>
-            <View style={styles.iconContainer}>
-              <Icon name="run" size={24} color="#000" style={styles.icon} />
-              {experiencesMessages > 0 && <Badge style={styles.badge}>{experiencesMessages}</Badge>}
-            </View>
-            <Text style={styles.label}>Experiences</Text>
-          </View>
-        </TabScreen>
-      </Tabs>
+      <TouchableOpacity onPress={() => handleTabPress('Rides')} style={getTabStyle('Rides')}>
+        <View style={styles.iconContainer}>
+          <MaterialCommunityIcons name="car" size={24} color={getIconColor('Rides')} style={styles.icon} />
+          {ridesMessages > 0 && <Badge style={styles.badge}>{ridesMessages}</Badge>}
+        </View>
+        <Text style={[styles.label, selectedTab === 'Rides' && styles.selectedLabel]}>Rides</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={() => handleTabPress('Airbnbs')} style={getTabStyle('Airbnbs')}>
+        <View style={styles.iconContainer}>
+          <MaterialCommunityIcons name="home" size={24} color={getIconColor('Airbnbs')} style={styles.icon} />
+          {airbnbMessages > 0 && <Badge style={styles.badge}>{airbnbMessages}</Badge>}
+        </View>
+        <Text style={[styles.label, selectedTab === 'Airbnbs' && styles.selectedLabel]}>Airbnbs</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={() => handleTabPress('Items')} style={getTabStyle('Items')}>
+        <View style={styles.iconContainer}>
+          <MaterialCommunityIcons name="gift" size={24} color={getIconColor('Items')} style={styles.icon} />
+          {itemsMessages > 0 && <Badge style={styles.badge}>{itemsMessages}</Badge>}
+        </View>
+        <Text style={[styles.label, selectedTab === 'Items' && styles.selectedLabel]}>Items</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={() => handleTabPress('Experiences')} style={getTabStyle('Experiences')}>
+        <View style={styles.iconContainer}>
+          <MaterialCommunityIcons name="run" size={24} color={getIconColor('Experiences')} style={styles.icon} />
+          {experiencesMessages > 0 && <Badge style={styles.badge}>{experiencesMessages}</Badge>}
+        </View>
+        <Text style={[styles.label, selectedTab === 'Experiences' && styles.selectedLabel]}>Experiences</Text>
+      </TouchableOpacity>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
     marginTop: 20,
+    backgroundColor: '#ffffff',
   },
-  tabContent: {
+  tab: {
     alignItems: 'center',
+    paddingVertical: 10,
+    flex: 1,
+  },
+  selectedTab: {
+    alignItems: 'center',
+    paddingVertical: 10,
+    flex: 1,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 8,
   },
   iconContainer: {
     position: 'relative',
@@ -97,10 +127,16 @@ const styles = StyleSheet.create({
     right: -10,
     backgroundColor: 'red',
     color: 'white',
+    fontSize: 10,
   },
   label: {
     fontSize: 10,
     marginTop: 4,
+  },
+  selectedLabel: {
+    fontWeight: 'bold',
+    textDecorationLine: 'underline',
+    color: '#6200ea',
   },
 });
 
