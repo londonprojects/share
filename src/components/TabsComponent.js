@@ -86,6 +86,7 @@ const styles = StyleSheet.create({
   },
   iconContainer: {
     position: 'relative',
+    alignItems: 'center',
   },
   icon: {
     marginBottom: 4,
@@ -99,6 +100,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 10,
+    marginTop: 4,
   },
 });
 

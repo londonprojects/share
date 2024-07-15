@@ -1,6 +1,6 @@
 // HomeScreen.js
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView, Alert, TextInput, Button as RNButton } from 'react-native';
+import { View, StyleSheet, ScrollView, Alert, TextInput, Button as RNButton, Image } from 'react-native';
 import { Provider as PaperProvider, Searchbar, FAB, Button, Avatar, useTheme, Text } from 'react-native-paper';
 import { firestore, auth } from '../services/firebase';
 import { getRandomImage } from '../services/unsplash';
@@ -9,7 +9,8 @@ import UserList from '../components/UserList';
 import ListingCard from '../components/ListingCard';
 import MapSection from '../components/MapSection';
 import TabsComponent from '../components/TabsComponent';
-import MatchingItinerariesComponent from '../components/MatchingItinerariesComponent'; // Import the new MatchingItinerariesComponent
+import MatchingItinerariesComponent from '../components/MatchingItinerariesComponent';
+import { addDummyData } from '../services/dummyData';
 import theme from '../../theme';
 
 const DEFAULT_IMAGE = 'https://plus.unsplash.com/premium_photo-1683800241997-a387bacbf06b?q=80&w=1287&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D';
@@ -24,6 +25,7 @@ const HomeScreen = ({ navigation }) => {
   const [fabOpen, setFabOpen] = useState(false); // Ensure this state is defined
   const currentUser = auth.currentUser;
   const { colors } = useTheme();
+  const [dataAdded, setDataAdded] = useState(false); // Ensure data is added only once
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -76,10 +78,21 @@ const HomeScreen = ({ navigation }) => {
       setLatestListings(listings);
     };
 
+    const addDataIfNeeded = async () => {
+      const usersSnapshot = await firestore.collection('users').get();
+      if (usersSnapshot.empty) {
+        await addDummyData();
+        setDataAdded(true);
+      }
+    };
+
     fetchUserProfile();
     fetchRecentUsers();
     fetchLatestListings();
-  }, [currentUser]);
+    if (!dataAdded) {
+      addDataIfNeeded();
+    }
+  }, [currentUser, dataAdded]);
 
   const handleSearch = (query) => {
     setQuery(query);
@@ -99,6 +112,14 @@ const HomeScreen = ({ navigation }) => {
     }
   };
 
+  const renderAvatar = (user) => {
+    if (user.photoURL && user.photoURL.startsWith('file://')) {
+      return <Image source={{ uri: user.photoURL }} style={styles.localAvatar} />;
+    } else {
+      return <Avatar.Image size={80} source={{ uri: user.photoURL || DEFAULT_IMAGE }} />;
+    }
+  };
+
   return (
     <PaperProvider theme={theme}>
       <View style={styles.container}>
@@ -113,14 +134,13 @@ const HomeScreen = ({ navigation }) => {
           <UserList recentUsers={recentUsers} title="Nearby Travelers" />
           {recentUsers.map(user => (
             <View key={user.id} style={styles.recentUserContainer}>
-              <Avatar.Image size={80} source={{ uri: user.photoURL || DEFAULT_IMAGE }} />
+              {renderAvatar(user)}
               <Text style={styles.userName}>{user.displayName}</Text>
             </View>
           ))}
           <Text style={styles.subtitle}>Sharing around me</Text>
           <MapSection />
           <MatchingItinerariesComponent navigation={navigation} />
-
           <Text style={styles.subtitle}>Latest Listings</Text>
           {latestListings.map(listing => (
             <ListingCard
@@ -185,8 +205,9 @@ const styles = StyleSheet.create({
   fab: {
     position: 'absolute',
     margin: 16,
-    right: 0,
+    left: '50%',
     bottom: 0,
+    transform: [{ translateX: -120 }], // Adjust based on the FAB size
   },
   menu: {
     backgroundColor: 'white',
@@ -202,6 +223,11 @@ const styles = StyleSheet.create({
     marginTop: 8,
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  localAvatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
   },
 });
 
