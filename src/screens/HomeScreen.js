@@ -145,6 +145,12 @@ const HomeScreen = ({ navigation }) => {
     }
   };
 
+  // const recentUsers = [
+  //   { id: 'user1', photoURL: 'https://example.com/photo1.jpg', isHitchhiking: true, isOnline: false },
+  //   { id: 'user2', photoURL: 'https://example.com/photo2.jpg', isHitchhiking: false, isOnline: true },
+  //   // Add more users as needed
+  // ];
+
   return (
     <PaperProvider theme={theme}>
       <View style={styles.container}>
@@ -159,7 +165,8 @@ const HomeScreen = ({ navigation }) => {
           contentContainerStyle={styles.scrollView}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         >
-          <UserList recentUsers={recentUsers} title="Latest Travelers" />
+          {/* <UserList recentUsers={recentUsers} title="Latest Travelers" /> */}
+          <UserList recentUsers={recentUsers} title="Recent Users" navigation={navigation} />
           {/* {recentUsers.map(user => (
             <View key={user.id} style={styles.recentUserContainer}>
               {renderAvatar(user)}
@@ -214,7 +221,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8f9fa',
   },
   scrollView: {
-    paddingVertical: 20,
+    // paddingVertical: 20,
   },
   searchbar: {
     margin: 16,
