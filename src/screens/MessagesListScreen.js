@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, FlatList, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { Text, List, Avatar, ActivityIndicator, Searchbar, Divider, IconButton } from 'react-native-paper';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { firestore, auth } from '../services/firebase';
 
 const DEFAULT_IMAGE = 'https://plus.unsplash.com/premium_photo-1683800241997-a387bacbf06b?q=80&w=1287&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D';
@@ -28,11 +29,13 @@ const MessagesListScreen = ({ navigation }) => {
 
           const sentMessages = sentMessagesSnapshot.docs.map(doc => ({
             id: doc.id,
+            threadId: doc.data().threadId || doc.id, // Ensure threadId is set
             ...doc.data(),
           }));
 
           const receivedMessages = receivedMessagesSnapshot.docs.map(doc => ({
             id: doc.id,
+            threadId: doc.data().threadId || doc.id, // Ensure threadId is set
             ...doc.data(),
           }));
 
@@ -82,6 +85,11 @@ const MessagesListScreen = ({ navigation }) => {
   };
 
   const handleDeleteThread = async (threadId) => {
+    if (!threadId) {
+      Alert.alert('Error', 'Thread ID is missing');
+      return;
+    }
+    
     try {
       const threadSnapshot = await firestore.collection('messages').where('threadId', '==', threadId).get();
       const batch = firestore.batch();
@@ -96,34 +104,37 @@ const MessagesListScreen = ({ navigation }) => {
     }
   };
 
-  if (loading) {
-    return <ActivityIndicator style={styles.loading} />;
-  }
+  const renderItem = ({ item }) => {
+    const isUnread = item.senderId !== auth.currentUser?.uid && !item.replied;
 
-  const renderItem = ({ item }) => (
-    <TouchableOpacity
-      onPress={() => navigation.navigate('MessageDetail', { message: item })}
-    >
-      <List.Item
-        title={item.message}
-        description={`From: ${item.senderId === auth.currentUser?.uid ? 'You' : item.sender?.name || 'Unknown'} | To: ${item.receiver?.name || 'Unknown'} | ${new Date(item.timestamp.seconds * 1000).toLocaleString()}`}
-        left={() => (
-          <Avatar.Image
-            size={40}
-            source={{ uri: item.senderId === auth.currentUser?.uid ? auth.currentUser.photoURL : item.sender?.photoURL || DEFAULT_IMAGE }}
-          />
-        )}
-        right={() => (
-          <IconButton
-            icon="delete"
-            onPress={() => handleDeleteThread(item.threadId)}
-          />
-        )}
-        style={styles.listItem}
-      />
-      <Divider />
-    </TouchableOpacity>
-  );
+    return (
+      <TouchableOpacity
+        onPress={() => navigation.navigate('MessageDetail', { message: item })}
+      >
+        <List.Item
+          title={item.message}
+          description={`From: ${item.senderId === auth.currentUser?.uid ? 'You' : item.sender?.name || 'Unknown'} | To: ${item.receiver?.name || 'Unknown'} | ${new Date(item.timestamp.seconds * 1000).toLocaleString()}`}
+          left={() => (
+            <Avatar.Image
+              size={40}
+              source={{ uri: item.senderId === auth.currentUser?.uid ? auth.currentUser.photoURL : item.sender?.photoURL || DEFAULT_IMAGE }}
+            />
+          )}
+          right={() => (
+            <>
+              {isUnread && <MaterialCommunityIcons name="bell-ring" size={24} color="red" />}
+              <IconButton
+                icon="delete"
+                onPress={() => handleDeleteThread(item.threadId)}
+              />
+            </>
+          )}
+          style={styles.listItem}
+        />
+        <Divider />
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={styles.container}>

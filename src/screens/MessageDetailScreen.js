@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, FlatList, Alert } from 'react-native';
 import { TextInput, Button, Text, Avatar, ActivityIndicator, IconButton, Divider, List } from 'react-native-paper';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { firestore, auth } from '../services/firebase';
 
 const DEFAULT_IMAGE = 'https://plus.unsplash.com/premium_photo-1683800241997-a387bacbf06b?q=80&w=1287&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D';
@@ -82,21 +83,35 @@ const MessageDetailScreen = ({ route, navigation }) => {
     }
   };
 
-  const renderItem = ({ item }) => (
-    <View style={styles.listItem}>
-      <List.Item
-        title={item.message}
-        description={`${item.senderId === auth.currentUser?.uid ? 'You' : item.sender?.name || 'Unknown'} | ${new Date(item.timestamp.seconds * 1000).toLocaleString()}`}
-        left={() => (
-          <Avatar.Image
-            size={40}
-            source={{ uri: item.senderId === auth.currentUser?.uid ? auth.currentUser.photoURL : item.sender?.photoURL || DEFAULT_IMAGE }}
-          />
-        )}
-      />
-      <Divider />
-    </View>
-  );
+  const renderItem = ({ item }) => {
+    const isCurrentUser = item.senderId === auth.currentUser?.uid;
+    const messageDate = item.timestamp?.seconds ? new Date(item.timestamp.seconds * 1000).toLocaleString() : 'Invalid Date';
+    
+    // Determine if this is the latest message and if it's from another user
+    const isLatestMessage = thread.length > 0 && thread[0].id === item.id;
+    const isUnread = isLatestMessage && !isCurrentUser;
+
+    return (
+      <View style={[styles.listItem, isCurrentUser ? styles.currentUser : styles.otherUser]}>
+        <List.Item
+          title={item.message}
+          description={`${isCurrentUser ? 'You' : item.sender?.name || 'Unknown'} | ${messageDate}`}
+          left={() => (
+            <Avatar.Image
+              size={40}
+              source={{ uri: isCurrentUser ? auth.currentUser.photoURL : item.sender?.photoURL || DEFAULT_IMAGE }}
+            />
+          )}
+          right={() => (
+            isUnread && (
+              <MaterialCommunityIcons name="bell-ring" size={24} color="red" />
+            )
+          )}
+        />
+        <Divider />
+      </View>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -152,6 +167,14 @@ const styles = StyleSheet.create({
     marginVertical: 4,
     borderRadius: 10,
     padding: 10,
+  },
+  currentUser: {
+    alignSelf: 'flex-end',
+    backgroundColor: '#e6f7ff',
+  },
+  otherUser: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#f1f1f1',
   },
   replyContainer: {
     flexDirection: 'row',

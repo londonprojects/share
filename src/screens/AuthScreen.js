@@ -9,10 +9,28 @@ const AuthScreen = ({ navigation }) => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [remindMe, setRemindMe] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleLogin = async () => {
+    const trimmedEmail = email.replace(/\s+/g, ''); // Remove all spaces from the email
+    const trimmedPassword = password.trim();
+
+    if (!trimmedEmail || !trimmedPassword) {
+      setErrorMessage('Please fill in both email and password.');
+      return;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      setErrorMessage('Please enter a valid email address.');
+      return;
+    }
+
+    setErrorMessage(''); // Clear any previous error messages
+
     try {
-      await auth.signInWithEmailAndPassword(email, password);
+      await auth.signInWithEmailAndPassword(trimmedEmail, trimmedPassword);
       if (remindMe) {
         // Save the user's credentials securely if remind me is checked
         // This is just a placeholder, in a real app you would use secure storage
@@ -20,7 +38,7 @@ const AuthScreen = ({ navigation }) => {
       }
       navigation.navigate('Home'); // Navigate to your home screen after login
     } catch (error) {
-      alert(error.message);
+      setErrorMessage(error.message);
     }
   };
 
@@ -31,6 +49,7 @@ const AuthScreen = ({ navigation }) => {
     >
       <View style={styles.container}>
         <Text style={styles.title}>Sign in</Text>
+        {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
         <TextInput
           placeholder="Email"
           placeholderTextColor="#ffffff"
@@ -94,11 +113,15 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     marginBottom: 20,
   },
+  errorText: {
+    color: 'red',
+    marginBottom: 10,
+  },
   input: {
     width: '100%',
     height: 50,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    marginBottom: 20,
+    marginBottom: 10, // Reduced margin to avoid extra space
     borderRadius: 5,
     paddingHorizontal: 10,
     color: '#ffffff',
@@ -109,7 +132,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 50,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    marginBottom: 20,
+    marginBottom: 10, // Reduced margin to avoid extra space
     borderRadius: 5,
   },
   passwordInput: {
