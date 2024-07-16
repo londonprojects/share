@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, FlatList, StyleSheet, Image, Alert, ScrollView, TouchableOpacity, TextInput } from 'react-native';
-import { Text, Card, Searchbar, IconButton, Avatar, Badge, Button, Portal, Dialog, Paragraph, ActivityIndicator, Provider as PaperProvider } from 'react-native-paper';
+import { View, FlatList, StyleSheet, Image, Alert, ScrollView, TextInput } from 'react-native';
+import { Text, Card, Searchbar, IconButton, Avatar, Badge, Button, Portal, Dialog, Paragraph, ActivityIndicator, Provider as PaperProvider, Switch } from 'react-native-paper';
 import { firestore, auth } from '../services/firebase';
 import axios from 'axios';
-import CustomAppBar from '../components/CustomAppBar'; // Import CustomAppBar
-import TabsComponent from '../components/TabsComponent'; // Import TabsComponent
+import CustomAppBar from '../components/CustomAppBar';
+import TabsComponent from '../components/TabsComponent';
 
-const UNSPLASH_ACCESS_KEY = '9tdu1sdQdRJV4zwTDqLsSxT9-yJbuud6msoTTMAu_Lg'; // Replace with your Unsplash Access Key
-const DEFAULT_IMAGE = 'https://images.unsplash.com/photo-1716671827397-8948fb218779?q=80&w=1287&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'; // Replace with your default image URL
+const UNSPLASH_ACCESS_KEY = '9tdu1sdQdRJV4zwTDqLsSxT9-yJbuud6msoTTMAu_Lg';
+const DEFAULT_IMAGE = 'https://images.unsplash.com/photo-1716671827397-8948fb218779?q=80&w=1287&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D';
 
 function RidesScreen({ navigation }) {
   const [rides, setRides] = useState([]);
@@ -19,7 +19,9 @@ function RidesScreen({ navigation }) {
   const [selectedRide, setSelectedRide] = useState(null);
   const [dialogVisible, setDialogVisible] = useState(false);
   const [editDialogVisible, setEditDialogVisible] = useState(false);
-  const [editRideDetails, setEditRideDetails] = useState({ destination: '', price: '', numPlaces: '', date: new Date() });
+  const [editRideDetails, setEditRideDetails] = useState({
+    destination: '', price: '', numPlaces: '', startDate: null, endDate: null, isTaxi: false, description: '', from: '', to: ''
+  });
   const [userProfilePhoto, setUserProfilePhoto] = useState(null);
 
   useEffect(() => {
@@ -129,6 +131,13 @@ function RidesScreen({ navigation }) {
     return 'Unknown date';
   };
 
+  const formatRangeDate = (startDate, endDate) => {
+    if (startDate && endDate) {
+      return `${new Date(startDate.seconds * 1000).toDateString()} - ${new Date(endDate.seconds * 1000).toDateString()}`;
+    }
+    return 'Unknown date range';
+  };
+
   const handleMessage = (userId) => {
     navigation.navigate('MessageScreen', { userId });
   };
@@ -203,20 +212,25 @@ function RidesScreen({ navigation }) {
                     <View style={styles.rideHeader}>
                       <Image source={{ uri: item.userPhoto }} style={styles.userPhoto} />
                       <View>
-                        <Text style={styles.cardTitle}>{item.destination}</Text>
+                        <Text style={styles.cardTitle}>
+                          {item.destination}
+                        </Text>
                         <Text style={styles.userName}>{item.userName}</Text>
-                        <Text style={styles.cardDate}>{formatDate(item.dateListed)}</Text>
+                        <Text style={styles.cardDate}>{formatRangeDate(item.startDate, item.endDate)}</Text>
                       </View>
                       {messages[item.userId] && (
                         <Badge style={styles.badge}>{messages[item.userId].length}</Badge>
                       )}
                     </View>
+                    <Text style={styles.rideDetails}>From: {item.from}</Text>
+                    <Text style={styles.rideDetails}>To: {item.to}</Text>
                     <Text style={styles.rideDetails}>Price: ${item.price}</Text>
                     <Text style={styles.rideDetails}>Number of Places: {item.numPlaces}</Text>
                     {item.timeLimited && <Text style={styles.rideDetails}>Time Limited</Text>}
-                    <Text style={styles.rideDate}>Date: {formatDate(item.date)}</Text>
+                    <Text style={styles.rideDetails}>Description: {item.description}</Text>
                   </Card.Content>
                   <Card.Actions>
+                  {item.isTaxi && <IconButton icon="taxi" size={20} style={styles.taxiIcon} />}
                     <IconButton icon="thumb-up" onPress={() => notifyOwner(item.userId, item.id)} />
                     <IconButton icon="message" onPress={() => handleMessage(item.userId)} />
                     {item.userId === auth.currentUser?.uid && (
@@ -238,10 +252,13 @@ function RidesScreen({ navigation }) {
               {selectedRide && (
                 <>
                   <Paragraph>Destination: {selectedRide.destination}</Paragraph>
+                  <Paragraph>From: {selectedRide.from}</Paragraph>
+                  <Paragraph>To: {selectedRide.to}</Paragraph>
                   <Paragraph>Price: ${selectedRide.price}</Paragraph>
                   <Paragraph>Number of Places: {selectedRide.numPlaces}</Paragraph>
-                  <Paragraph>Date: {formatDate(selectedRide.date)}</Paragraph>
+                  <Paragraph>Date: {formatRangeDate(selectedRide.startDate, selectedRide.endDate)}</Paragraph>
                   <Paragraph>Time Limited: {selectedRide.timeLimited ? 'Yes' : 'No'}</Paragraph>
+                  <Paragraph>Description: {selectedRide.description}</Paragraph>
                 </>
               )}
             </Dialog.Content>
@@ -259,6 +276,18 @@ function RidesScreen({ navigation }) {
                 style={styles.input}
               />
               <TextInput
+                label="From"
+                value={editRideDetails.from}
+                onChangeText={(text) => handleEditChange('from', text)}
+                style={styles.input}
+              />
+              <TextInput
+                label="To"
+                value={editRideDetails.to}
+                onChangeText={(text) => handleEditChange('to', text)}
+                style={styles.input}
+              />
+              <TextInput
                 label="Price"
                 value={editRideDetails.price}
                 onChangeText={(text) => handleEditChange('price', text)}
@@ -272,6 +301,31 @@ function RidesScreen({ navigation }) {
                 style={styles.input}
                 keyboardType="numeric"
               />
+              <TextInput
+                label="Start Date"
+                value={editRideDetails.startDate ? new Date(editRideDetails.startDate.seconds * 1000).toDateString() : ''}
+                onChangeText={(text) => handleEditChange('startDate', new Date(text))}
+                style={styles.input}
+              />
+              <TextInput
+                label="End Date"
+                value={editRideDetails.endDate ? new Date(editRideDetails.endDate.seconds * 1000).toDateString() : ''}
+                onChangeText={(text) => handleEditChange('endDate', new Date(text))}
+                style={styles.input}
+              />
+              <TextInput
+                label="Description"
+                value={editRideDetails.description}
+                onChangeText={(text) => handleEditChange('description', text)}
+                style={styles.input}
+              />
+              <View style={styles.switchContainer}>
+                <Text>Is Taxi: </Text>
+                <Switch
+                  value={editRideDetails.isTaxi}
+                  onValueChange={(value) => handleEditChange('isTaxi', value)}
+                />
+              </View>
             </Dialog.Content>
             <Dialog.Actions>
               <Button onPress={hideEditDialog}>Cancel</Button>
@@ -301,7 +355,10 @@ const styles = StyleSheet.create({
   avatarContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginBottom: 20,
+    alignItems: 'center',
+    marginVertical: 10,
+    marginHorizontal: 15,
+    padding: 5,
   },
   avatar: {
     marginHorizontal: 5,
@@ -324,12 +381,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     marginRight: 8,
   },
-  profilePhoto: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: 8,
-  },
   userName: {
     fontSize: 14,
     color: '#757575',
@@ -347,11 +398,6 @@ const styles = StyleSheet.create({
     color: '#757575',
     marginTop: 8,
   },
-  rideDate: {
-    fontSize: 14,
-    color: '#757575',
-    marginTop: 8,
-  },
   badge: {
     backgroundColor: 'red',
     color: 'white',
@@ -362,6 +408,14 @@ const styles = StyleSheet.create({
   },
   input: {
     marginBottom: 10,
+  },
+  switchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  taxiIcon: {
+    marginLeft: 5,
   },
 });
 

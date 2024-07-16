@@ -50,7 +50,7 @@ const CustomTabBar = ({ navigation }) => {
         navigation.navigate('ItemShareScreen');
         break;
       case 'Experiences':
-        navigation.navigate('ExperienceShare');
+        navigation.navigate('ExperienceShareScreen');
         break;
       default:
         break;
@@ -103,7 +103,7 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginTop: 20,
+    // marginTop: 10,
     backgroundColor: '#ffffff',
   },
   tab: {
@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
   },
   selectedLabel: {
     fontWeight: 'bold',
-    textDecorationLine: 'underline',
+    textDecorationLine: 'no-underline',
     color: '#6200ea',
   },
 });

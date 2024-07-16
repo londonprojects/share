@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, FlatList, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { Text, List, Avatar, ActivityIndicator, Searchbar, Divider, IconButton } from 'react-native-paper';
 import { firestore, auth } from '../services/firebase';
 
@@ -15,47 +15,52 @@ const MessagesListScreen = ({ navigation }) => {
     const fetchMessages = async () => {
       const user = auth.currentUser;
       if (user) {
-        const sentMessagesSnapshot = await firestore
-          .collection('messages')
-          .where('senderId', '==', user.uid)
-          .get();
+        try {
+          const sentMessagesSnapshot = await firestore
+            .collection('messages')
+            .where('senderId', '==', user.uid)
+            .get();
 
-        const receivedMessagesSnapshot = await firestore
-          .collection('messages')
-          .where('receiverId', '==', user.uid)
-          .get();
+          const receivedMessagesSnapshot = await firestore
+            .collection('messages')
+            .where('receiverId', '==', user.uid)
+            .get();
 
-        const sentMessages = sentMessagesSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
+          const sentMessages = sentMessagesSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
 
-        const receivedMessages = receivedMessagesSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
+          const receivedMessages = receivedMessagesSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
 
-        const allMessages = [...sentMessages, ...receivedMessages];
+          const allMessages = [...sentMessages, ...receivedMessages];
 
-        const userIds = Array.from(new Set(allMessages.map(msg => [msg.senderId, msg.receiverId]).flat()));
-        const usersSnapshot = await firestore.collection('users').where('uid', 'in', userIds).get();
+          const userIds = Array.from(new Set(allMessages.map(msg => [msg.senderId, msg.receiverId]).flat()));
+          const usersSnapshot = await firestore.collection('users').where('uid', 'in', userIds).get();
 
-        const users = usersSnapshot.docs.reduce((acc, doc) => {
-          acc[doc.data().uid] = doc.data();
-          return acc;
-        }, {});
+          const users = usersSnapshot.docs.reduce((acc, doc) => {
+            acc[doc.data().uid] = doc.data();
+            return acc;
+          }, {});
 
-        const messagesWithUserInfo = allMessages.map(msg => ({
-          ...msg,
-          sender: users[msg.senderId] || {},
-          receiver: users[msg.receiverId] || {},
-        }));
+          const messagesWithUserInfo = allMessages.map(msg => ({
+            ...msg,
+            sender: users[msg.senderId] || {},
+            receiver: users[msg.receiverId] || {},
+          }));
 
-        const sortedMessages = messagesWithUserInfo.sort((a, b) => b.timestamp.seconds - a.timestamp.seconds);
+          const sortedMessages = messagesWithUserInfo.sort((a, b) => b.timestamp.seconds - a.timestamp.seconds);
 
-        setMessages(sortedMessages);
-        setFilteredMessages(sortedMessages);
-        setLoading(false);
+          setMessages(sortedMessages);
+          setFilteredMessages(sortedMessages);
+        } catch (error) {
+          console.error('Error fetching messages or users:', error);
+        } finally {
+          setLoading(false);
+        }
       }
     };
 
@@ -130,7 +135,7 @@ const MessagesListScreen = ({ navigation }) => {
       />
       <FlatList
         data={filteredMessages}
-        keyExtractor={item => item.id}
+        keyExtractor={(item, index) => `${item.id}-${index}`}
         renderItem={renderItem}
         contentContainerStyle={styles.list}
       />

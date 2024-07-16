@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, FlatList, Alert } from 'react-native';
-import { TextInput, Button, Text, Avatar, ActivityIndicator, IconButton, Divider } from 'react-native-paper';
+import { TextInput, Button, Text, Avatar, ActivityIndicator, IconButton, Divider, List } from 'react-native-paper';
 import { firestore, auth } from '../services/firebase';
 
 const DEFAULT_IMAGE = 'https://plus.unsplash.com/premium_photo-1683800241997-a387bacbf06b?q=80&w=1287&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D';
@@ -12,18 +12,32 @@ const MessageDetailScreen = ({ route, navigation }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchThread = async () => {
-      const threadSnapshot = await firestore.collection('messages').where('threadId', '==', message.threadId).get();
-      const threadMessages = threadSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
+    let isMounted = true;
 
-      setThread(threadMessages.sort((a, b) => b.timestamp.seconds - a.timestamp.seconds));
-      setLoading(false);
+    const fetchThread = async () => {
+      try {
+        const threadSnapshot = await firestore.collection('messages').where('threadId', '==', message.threadId).get();
+        const threadMessages = threadSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        if (isMounted) {
+          setThread(threadMessages.sort((a, b) => b.timestamp.seconds - a.timestamp.seconds));
+          setLoading(false);
+        }
+      } catch (error) {
+        if (isMounted) {
+          Alert.alert('Error', error.message);
+        }
+      }
     };
 
     fetchThread();
+
+    return () => {
+      isMounted = false;
+    };
   }, [message.threadId]);
 
   const handleSendReply = async () => {

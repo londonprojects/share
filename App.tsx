@@ -151,12 +151,12 @@ const App = () => {
             <Stack.Screen name="Login" component={LoginScreen} />
             <Stack.Screen name="Community" component={CommunityScreen} />
             <Stack.Screen name="EditProfile" component={EditProfileScreen} />
-            <Stack.Screen name="MapScreen" component={MapScreen} />
+            <Stack.Screen name="MapScreen" component={MapScreen} options={{ title: 'Map' }} />
             <Stack.Screen name="Messenger" component={MessengerScreen} options={{ title: 'Messenger' }} />
             <Stack.Screen name="MessageScreen" component={MessageScreen} options={{ title: 'Message' }} />
             <Stack.Screen name="RidesScreen" component={RidesScreen} options={{ headerShown: false }} />
-            <Stack.Screen name="MessagesList" component={MessagesListScreen} />
-            <Stack.Screen name="MessageDetail" component={MessagesDetailsScreen} />
+            <Stack.Screen name="MessagesList" component={MessagesListScreen} options={{ title: 'Messages List' }} />
+            <Stack.Screen name="MessageDetail" component={MessagesDetailsScreen} options={{ title: 'Messages Details' }} />
             <Stack.Screen name="UserProfile" component={UserProfileScreen} />
             <Stack.Screen name="AirbnbScreen" component={AirbnbScreen} options={{ headerShown: false }} />
           </Stack.Navigator>

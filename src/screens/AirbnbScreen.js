@@ -299,7 +299,10 @@ const styles = StyleSheet.create({
   avatarContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginBottom: 20,
+    alignItems: 'center',
+    marginVertical: 10,
+    marginHorizontal: 15,
+    padding: 5,
   },
   avatar: {
     marginHorizontal: 5,

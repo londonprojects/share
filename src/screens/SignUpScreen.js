@@ -24,14 +24,20 @@ const SignUpScreen = ({ navigation }) => {
     try {
       const avatarUrl = getRandomAvatarUrl();
 
+      // Create a new user with email and password
       const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-      await firestore.collection('users').doc(userCredential.user.uid).set({
+      const uid = userCredential.user.uid;
+
+      // Add additional user information to Firestore
+      await firestore.collection('users').doc(uid).set({
+        uid, // explicitly add the UID here
         name,
         email,
         photoURL: avatarUrl,
       });
 
-      navigation.navigate('Home'); // Navigate to your home screen after signup
+      // Navigate to home screen after successful signup
+      navigation.navigate('Home');
     } catch (error) {
       alert(error.message);
     }

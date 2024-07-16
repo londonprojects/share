@@ -1,13 +1,14 @@
 // screens/MapScreen.js
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Dimensions, Platform, PermissionsAndroid, Alert, Modal } from 'react-native';
+import { View, StyleSheet, Dimensions, Platform, PermissionsAndroid, Alert, Modal, TouchableOpacity } from 'react-native';
 import MapView from 'react-native-maps';
+import MapViewDirections from 'react-native-maps-directions';
 import Geolocation from '@react-native-community/geolocation';
 import { firestore } from '../services/firebase';
-import { Provider as PaperProvider } from 'react-native-paper';
+import { Provider as PaperProvider, Text, Avatar, Button, IconButton, useTheme } from 'react-native-paper';
 import MapMarkers from '../components/MapMarkers';
 import Filters from '../components/Filters';
-import ModalContent from '../components/ModalContent';
+import { GOOGLE_MAPS_API_KEY } from '@env'; // Import the API key from the .env file
 
 const MapScreen = () => {
   const [rides, setRides] = useState([]);
@@ -30,6 +31,8 @@ const MapScreen = () => {
   });
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedMarker, setSelectedMarker] = useState(null);
+  const [selectedRoute, setSelectedRoute] = useState(null);
+  const { colors } = useTheme();
 
   useEffect(() => {
     const requestLocationPermission = async () => {
@@ -102,6 +105,13 @@ const MapScreen = () => {
   const handleMarkerPress = (marker) => {
     setSelectedMarker(marker);
     setModalVisible(true);
+
+    if (marker.type === 'ride' && marker.startLocation && marker.endLocation) {
+      setSelectedRoute({
+        start: marker.startLocation,
+        end: marker.endLocation,
+      });
+    }
   };
 
   const contactUser = (userId) => {
@@ -112,6 +122,7 @@ const MapScreen = () => {
   const closeModal = () => {
     setModalVisible(false);
     setSelectedMarker(null);
+    setSelectedRoute(null);
   };
 
   return (
@@ -127,6 +138,23 @@ const MapScreen = () => {
           {filters.showItems && <MapMarkers data={items} type="item" handleMarkerPress={handleMarkerPress} />}
           {filters.showExperiences && <MapMarkers data={experiences} type="experience" handleMarkerPress={handleMarkerPress} />}
           {filters.showAirbnbs && <MapMarkers data={airbnbs} type="airbnb" handleMarkerPress={handleMarkerPress} />}
+
+          {selectedRoute && (
+            <MapViewDirections
+              origin={selectedRoute.start}
+              destination={selectedRoute.end}
+              apikey={GOOGLE_MAPS_API_KEY}
+              strokeWidth={3}
+              strokeColor="hotpink"
+              onReady={(result) => {
+                console.log(`Distance: ${result.distance} km`);
+                console.log(`Duration: ${result.duration} min.`);
+              }}
+              onError={(errorMessage) => {
+                console.error('Error in MapViewDirections:', errorMessage);
+              }}
+            />
+          )}
         </MapView>
         <Filters filters={filters} setFilters={setFilters} />
         <Modal
@@ -135,8 +163,28 @@ const MapScreen = () => {
           visible={modalVisible}
           onRequestClose={closeModal}
         >
-          <View style={styles.modalView}>
-            <ModalContent marker={selectedMarker} contactUser={contactUser} closeModal={closeModal} />
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalView}>
+              {selectedMarker && (
+                <>
+                  <View style={styles.modalHeader}>
+                    <Avatar.Image size={50} source={{ uri: selectedMarker.userPhoto }} />
+                    <Text style={styles.userName}>{selectedMarker.userName}</Text>
+                  </View>
+                  <Text style={styles.modalTitle}>{selectedMarker.title || selectedMarker.name}</Text>
+                  <Text style={styles.modalDetails}>From: {selectedMarker.startLocation?.address || 'N/A'}</Text>
+                  <Text style={styles.modalDetails}>To: {selectedMarker.endLocation?.address || 'N/A'}</Text>
+                  <Text style={styles.modalDetails}>Price: ${selectedMarker.price}</Text>
+                  <Text style={styles.modalDetails}>Spaces: {selectedMarker.numSpaces}</Text>
+                  <Text style={styles.modalDetails}>Date: {selectedMarker.date ? new Date(selectedMarker.date.seconds * 1000).toDateString() : 'N/A'}</Text>
+                  {selectedMarker.description && <Text style={styles.modalDetails}>Description: {selectedMarker.description}</Text>}
+                  <View style={styles.modalButtons}>
+                    <Button mode="contained" onPress={() => contactUser(selectedMarker.userId)}>Contact</Button>
+                    <Button mode="outlined" onPress={closeModal}>Close</Button>
+                  </View>
+                </>
+              )}
+            </View>
           </View>
         </Modal>
       </View>
@@ -152,14 +200,18 @@ const styles = StyleSheet.create({
     width: Dimensions.get('window').width,
     height: Dimensions.get('window').height,
   },
-  modalView: {
+  modalOverlay: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    margin: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalView: {
+    width: '90%',
     backgroundColor: 'white',
     borderRadius: 20,
-    padding: 35,
+    padding: 20,
+    alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -168,6 +220,31 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  userName: {
+    marginLeft: 10,
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 15,
+  },
+  modalDetails: {
+    fontSize: 16,
+    marginBottom: 10,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginTop: 20,
   },
 });
 
