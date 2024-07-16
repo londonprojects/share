@@ -20,8 +20,8 @@ import AirbnbScreen from './src/screens/AirbnbScreen';
 import ScheduleScreen from './src/screens/ScheduleScreen';
 import ItemShareScreen from './src/screens/ItemShareScreen';
 import ItemShare from './src/screens/ItemScreen';
+import ExperienceShare from './src/screens/ExperienceShare';
 import ExperienceShareScreen from './src/screens/ExperienceShareScreen';
-import ExperienceScreen from './src/screens/ExperienceScreen';
 import AuthScreen from './src/screens/AuthScreen';
 import SharingScreen from './src/screens/SharingScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
@@ -136,7 +136,7 @@ const App = () => {
             <Stack.Screen name="ItemShareScreen" component={ItemShareScreen} options={{ headerShown: false }} />
             <Stack.Screen name="ItemShare" component={ItemShare} />
             <Stack.Screen name="ExperienceShareScreen" component={ExperienceShareScreen} />
-            <Stack.Screen name="ExperienceShare" component={ExperienceScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="ExperienceShare" component={ExperienceShare} options={{ headerShown: false }} />
             <Stack.Screen name="Schedule" component={ScheduleScreen} />
             <Stack.Screen 
               name="Profile" 

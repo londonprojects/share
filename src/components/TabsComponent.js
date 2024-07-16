@@ -35,6 +35,10 @@ const CustomTabBar = ({ navigation }) => {
 
   const handleTabPress = (label) => {
     setSelectedTab(label);
+    navigateToScreen(label);
+  };
+
+  const navigateToScreen = (label) => {
     switch (label) {
       case 'Rides':
         navigation.navigate('RidesScreen');

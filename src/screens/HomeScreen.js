@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, ScrollView, Alert, Image, RefreshControl } from 'react-native';
-import { Provider as PaperProvider, Searchbar, FAB, Button, Avatar, useTheme, Text } from 'react-native-paper';
+import { Provider as PaperProvider, Searchbar, FAB, Avatar, useTheme, Text } from 'react-native-paper';
 import { firestore, auth } from '../services/firebase';
-import { getRandomImage } from '../services/unsplash';
 import CustomAppBar from '../components/CustomAppBar';
 import UserList from '../components/UserList';
 import ListingCard from '../components/ListingCard';
@@ -10,8 +9,8 @@ import MapSection from '../components/MapSection';
 import TabsComponent from '../components/TabsComponent';
 import MatchingItinerariesComponent from '../components/MatchingItinerariesComponent';
 import theme from '../../theme';
+import logger from '../services/logger';
 
-const UNSPLASH_ACCESS_KEY = 'your_unsplash_access_key'; // Replace with your Unsplash Access Key
 const DEFAULT_IMAGE = 'https://plus.unsplash.com/premium_photo-1683800241997-a387bacbf06b?q=80&w=1287&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D';
 const NO_ITEMS_IMAGE = 'https://via.placeholder.com/300x200.png?text=No+Items+Shared';
 
@@ -20,16 +19,37 @@ const HomeScreen = ({ navigation }) => {
   const [recentUsers, setRecentUsers] = useState([]);
   const [query, setQuery] = useState('');
   const [city, setCity] = useState('');
-  const [visible, setVisible] = useState(false);
   const [userProfilePhoto, setUserProfilePhoto] = useState(null);
   const [fabOpen, setFabOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const currentUser = auth.currentUser;
   const { colors } = useTheme();
+  const [listings, setListings] = useState([]);
+
+  const fetchListings = async () => {
+    // Your logic to fetch listings from Firestore
+    const fetchedListings = await firestore.collection('listings').get();
+    setListings(fetchedListings.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+  };
+
+  useEffect(() => {
+    fetchListings();
+  }, []);
+
+  useEffect(() => {
+    fetchUserProfile();
+    fetchRecentUsers();
+    fetchLatestListings();
+  }, [currentUser]);
 
   const fetchUserProfile = async () => {
-    if (currentUser) {
-      setUserProfilePhoto(currentUser.photoURL);
+    try {
+      if (currentUser) {
+        setUserProfilePhoto(currentUser.photoURL);
+        logger.info('User profile photo set:', currentUser.photoURL);
+      }
+    } catch (error) {
+      logger.error('Error fetching user profile:', error);
     }
   };
 
@@ -39,7 +59,7 @@ const HomeScreen = ({ navigation }) => {
       const imageUrl = await getRandomImage(query);
       data.imageUrl = imageUrl || DEFAULT_IMAGE;
     } catch (error) {
-      console.error('Error fetching image from Unsplash:', error);
+      logger.error('Error fetching image from Unsplash:', error);
       data.imageUrl = DEFAULT_IMAGE;
     }
     return data;
@@ -47,34 +67,42 @@ const HomeScreen = ({ navigation }) => {
 
   const fetchRecentUsers = async () => {
     try {
+      logger.debug('Fetching recent users from Firestore...');
       const usersSnapshot = await firestore.collection('users').orderBy('lastPosted', 'desc').limit(5).get();
+      logger.debug('Fetched users snapshot:', usersSnapshot);
       const usersList = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      console.log('Fetched recent users:', usersList);
+      logger.info('Fetched recent users:', usersList);
       if (usersList.length > 0) {
         setRecentUsers(usersList);
       } else {
-        console.log('No recent users found.');
+        logger.info('No recent users found.');
       }
     } catch (error) {
-      console.error('Error fetching recent users:', error);
+      logger.error('Error fetching recent users:', error);
     }
   };
 
   const fetchLatestListings = async () => {
-    const collections = ['rides', 'airbnbs', 'items', 'experiences'];
-    const latestDocs = await Promise.all(
-      collections.map(collection =>
-        firestore.collection(collection).orderBy('dateListed', 'desc').limit(1).get()
-      )
-    );
+    try {
+      logger.debug('Fetching latest listings from Firestore...');
+      const collections = ['rides', 'airbnbs', 'items', 'experiences'];
+      const latestDocs = await Promise.all(
+        collections.map(collection =>
+          firestore.collection(collection).orderBy('dateListed', 'desc').limit(1).get()
+        )
+      );
 
-    const listings = await Promise.all(
-      latestDocs.flatMap(snapshot =>
-        snapshot.docs.map(doc => fetchImageAndSetState(doc, doc.data().name))
-      )
-    );
+      const listings = await Promise.all(
+        latestDocs.flatMap(snapshot =>
+          snapshot.docs.map(doc => fetchImageAndSetState(doc, doc.data().name))
+        )
+      );
 
-    setLatestListings(listings);
+      setLatestListings(listings);
+      logger.info('Fetched latest listings:', listings);
+    } catch (error) {
+      logger.error('Error fetching latest listings:', error);
+    }
   };
 
   const onRefresh = async () => {
@@ -84,12 +112,6 @@ const HomeScreen = ({ navigation }) => {
     await fetchLatestListings();
     setRefreshing(false);
   };
-
-  useEffect(() => {
-    fetchUserProfile();
-    fetchRecentUsers();
-    fetchLatestListings();
-  }, [currentUser]);
 
   const handleSearch = (query) => {
     setQuery(query);
@@ -110,10 +132,16 @@ const HomeScreen = ({ navigation }) => {
   };
 
   const renderAvatar = (user) => {
-    if (user.photoURL && user.photoURL.startsWith('file://')) {
+    logger.debug('renderAvatar called with:', user);
+    if (user.userPhoto && user.userPhoto.startsWith('file://')) {
+      logger.debug('Rendering local image:', user.photoURL);
       return <Image source={{ uri: user.photoURL }} style={styles.localAvatar} />;
+    } else if (user.photoURL) {
+      logger.debug('Rendering remote image:', user.photoURL);
+      return <Avatar.Image size={80} source={{ uri: user.photoURL }} />;
     } else {
-      return <Avatar.Image size={80} source={{ uri: user.photoURL || DEFAULT_IMAGE }} />;
+      logger.debug('Rendering default image');
+      return <Avatar.Image size={80} source={{ uri: DEFAULT_IMAGE }} />;
     }
   };
 
@@ -131,16 +159,16 @@ const HomeScreen = ({ navigation }) => {
           contentContainerStyle={styles.scrollView}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         >
-          <UserList recentUsers={recentUsers} title="Nearby Travelers" />
-          {recentUsers.map(user => (
+          <UserList recentUsers={recentUsers} title="Latest Travelers" />
+          {/* {recentUsers.map(user => (
             <View key={user.id} style={styles.recentUserContainer}>
               {renderAvatar(user)}
               <Text style={styles.userName}>{user.displayName}</Text>
             </View>
-          ))}
+          ))} */}
           <Text style={styles.subtitle}>Sharing around me</Text>
           <MapSection />
-          <MatchingItinerariesComponent navigation={navigation} />
+          {/* <MatchingItinerariesComponent navigation={navigation} /> */}
           <Text style={styles.subtitle}>Latest Listings</Text>
           {latestListings.length > 0 ? (
             latestListings.map(listing => (
@@ -151,6 +179,7 @@ const HomeScreen = ({ navigation }) => {
                 userProfilePhoto={userProfilePhoto}
                 navigation={navigation}
                 notifyOwner={notifyOwner}
+                refreshListings={fetchListings}
               />
             ))
           ) : (
@@ -196,32 +225,6 @@ const styles = StyleSheet.create({
     marginVertical: 16,
     marginHorizontal: 16,
   },
-  inputContainer: {
-    padding: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  input: {
-    width: '90%',
-    marginVertical: 8,
-  },
-  button: {
-    width: '90%',
-    marginVertical: 8,
-  },
-  fab: {
-    position: 'absolute',
-    margin: 16,
-    left: '50%',
-    bottom: 0,
-    transform: [{ translateX: -120 }], // Adjust based on the FAB size
-  },
-  menu: {
-    backgroundColor: 'white',
-    padding: 10,
-    borderRadius: 5,
-    elevation: 2,
-  },
   recentUserContainer: {
     alignItems: 'center',
     marginVertical: 8,
@@ -249,6 +252,14 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginTop: 10,
     textAlign: 'center',
+  },
+  fab: {
+    position: 'absolute',
+    margin: 16,
+    width: 250,
+    left: '50%',
+    bottom: 0,
+    transform: [{ translateX: -120 }], // Adjust based on the FAB size
   },
 });
 

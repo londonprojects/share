@@ -3,6 +3,7 @@ import { View, StyleSheet, Alert } from 'react-native';
 import { Text, TextInput, Button, Avatar } from 'react-native-paper';
 import { auth, firestore } from '../services/firebase';
 import ImagePicker from 'react-native-image-crop-picker';
+import storage from '@react-native-firebase/storage';  // Import storage
 
 const EditProfileScreen = ({ navigation }) => {
   const [profile, setProfile] = useState({
@@ -12,6 +13,7 @@ const EditProfileScreen = ({ navigation }) => {
   });
   const [newDisplayName, setNewDisplayName] = useState('');
   const [newPhotoURL, setNewPhotoURL] = useState('');
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     const user = auth.currentUser;
@@ -30,14 +32,24 @@ const EditProfileScreen = ({ navigation }) => {
     const user = auth.currentUser;
     if (user) {
       try {
+        let photoURL = newPhotoURL;
+        if (photoURL && photoURL.startsWith('file://')) {
+          setUploading(true);
+          const storageRef = storage().ref(`profile_pictures/${user.uid}.jpg`);
+          await storageRef.putFile(photoURL);
+          photoURL = await storageRef.getDownloadURL();
+          setUploading(false);
+        }
+
         await user.updateProfile({
           displayName: newDisplayName,
-          photoURL: newPhotoURL,
+          photoURL,
         });
 
-        firestore.collection('users').doc(user.uid).set({
+        await firestore.collection('users').doc(user.uid).set({
           displayName: newDisplayName,
-          photoURL: newPhotoURL,
+          photoURL,
+          lastPosted: new Date(),  // Add this line to update the lastPosted field
         }, { merge: true });
 
         Alert.alert("Success", "Profile updated successfully!");
@@ -65,7 +77,7 @@ const EditProfileScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <Avatar.Image size={100} source={{ uri: newPhotoURL }} style={styles.avatar} />
-      <Button mode="outlined" onPress={pickImage} style={styles.button}>
+      <Button mode="outlined" onPress={pickImage} style={styles.button} disabled={uploading}>
         Change Profile Picture
       </Button>
       <TextInput
@@ -80,7 +92,7 @@ const EditProfileScreen = ({ navigation }) => {
         style={styles.input}
         disabled
       />
-      <Button mode="contained" onPress={handleSave} style={styles.button}>
+      <Button mode="contained" onPress={handleSave} style={styles.button} disabled={uploading}>
         Save Changes
       </Button>
     </View>

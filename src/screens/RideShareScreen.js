@@ -1,20 +1,55 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, Alert, Platform } from 'react-native';
-import { Text, TextInput, Button, useTheme, Avatar } from 'react-native-paper';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, Alert, Platform, Image, ScrollView } from 'react-native';
+import { Text, TextInput, Button, useTheme, Avatar, Checkbox } from 'react-native-paper';
+import { DatePickerModal } from 'react-native-paper-dates';
 import Slider from '@react-native-community/slider';
 import axios from 'axios';
 import { firestore, auth } from '../services/firebase'; // Adjust the path as needed
+import { GOOGLE_API_KEY, UNSPLASH_ACCESS_KEY } from '@env'; // Import the environment variable
 
 const RideShareScreen = ({ navigation }) => {
-  const [rideDetails, setRideDetails] = useState({ destination: '', date: new Date(), price: 0, numSpaces: 1, timeLimited: false, location: { latitude: null, longitude: null } });
+  const [rideDetails, setRideDetails] = useState({
+    destination: '',
+    startDate: new Date(),
+    endDate: new Date(),
+    price: 0,
+    numSpaces: 1,
+    timeLimited: false,
+    location: { latitude: null, longitude: null },
+    description: '',
+    startPoint: '',
+    isTaxi: false,
+    imageUrl: ''
+  });
   const [showDatePicker, setShowDatePicker] = useState(false);
   const { colors } = useTheme();
 
-  const handleDateChange = (event, selectedDate) => {
-    const currentDate = selectedDate || rideDetails.date;
-    setShowDatePicker(Platform.OS === 'ios');
-    setRideDetails({ ...rideDetails, date: currentDate });
+  useEffect(() => {
+    const checkApiKey = async () => {
+      try {
+        const response = await axios.get('https://maps.googleapis.com/maps/api/geocode/json', {
+          params: {
+            address: 'test',
+            key: GOOGLE_API_KEY, // Use the environment variable
+          },
+        });
+
+        if (response.data.status === 'REQUEST_DENIED') {
+          console.error('Geocoding API error: REQUEST_DENIED - Check your API key.');
+        } else {
+          console.log('Geocoding API key is working.');
+        }
+      } catch (error) {
+        console.error('Geocoding API request failed:', error);
+      }
+    };
+
+    checkApiKey();
+  }, []);
+
+  const handleDateChange = ({ startDate, endDate }) => {
+    setRideDetails({ ...rideDetails, startDate, endDate });
+    setShowDatePicker(false);
   };
 
   const getCoordinates = async (address) => {
@@ -22,7 +57,7 @@ const RideShareScreen = ({ navigation }) => {
       const response = await axios.get('https://maps.googleapis.com/maps/api/geocode/json', {
         params: {
           address,
-          key: 'AIzaSyAL8jwPOMbTWQoxeSlH01GZPUl7kQYj5YI',
+          key: GOOGLE_API_KEY, // Use the environment variable
         },
       });
 
@@ -33,19 +68,39 @@ const RideShareScreen = ({ navigation }) => {
           longitude: location.lng,
         };
       } else {
-        console.error('Geocoding API error:', response.data.status);
-        Alert.alert('Error', `Geocoding API error: ${response.data.status}`);
+        console.error('Geocoding API error:', response.data);
+        Alert.alert('Error', `Geocoding API error: ${response.data.status} - ${response.data.error_message}`);
         return null;
       }
     } catch (error) {
       console.error('Geocoding API request failed:', error);
-      Alert.alert('Error', 'Failed to get location coordinates.');
+      Alert.alert('Error', `Failed to get location coordinates. ${error.message}`);
       return null;
     }
   };
 
+  const fetchUnsplashImage = async (query) => {
+    try {
+      const response = await axios.get('https://api.unsplash.com/search/photos', {
+        params: {
+          query,
+          client_id: UNSPLASH_ACCESS_KEY, // Use your Unsplash access key
+        },
+      });
+
+      if (response.data.results.length > 0) {
+        return response.data.results[0].urls.regular;
+      } else {
+        return 'https://example.com/default-driving-image.jpg'; // Use a default image URL
+      }
+    } catch (error) {
+      console.error('Error fetching image from Unsplash:', error);
+      return 'https://example.com/default-driving-image.jpg'; // Use a default image URL
+    }
+  };
+
   const handleShare = async () => {
-    if (!rideDetails.destination || rideDetails.price <= 0 || rideDetails.numSpaces <= 0) {
+    if (!rideDetails.destination || !rideDetails.startPoint || rideDetails.price <= 0 || rideDetails.numSpaces <= 0) {
       Alert.alert("Missing Information", "Please fill in all the details.");
       return;
     }
@@ -56,6 +111,8 @@ const RideShareScreen = ({ navigation }) => {
       return;
     }
 
+    const imageUrl = await fetchUnsplashImage(rideDetails.destination);
+
     const user = auth.currentUser;
     if (user) {
       const rideWithUser = {
@@ -65,6 +122,7 @@ const RideShareScreen = ({ navigation }) => {
         userName: user.displayName,
         userPhoto: user.photoURL,
         dateListed: new Date(),
+        imageUrl
       };
 
       firestore.collection('rides').add(rideWithUser)
@@ -81,9 +139,16 @@ const RideShareScreen = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container}>
       <Avatar.Icon size={80} icon="car" style={styles.avatar} />
       <Text style={[styles.title, { color: colors.primary }]}>Share a Ride</Text>
+      <TextInput
+        label="Starting Point"
+        value={rideDetails.startPoint}
+        onChangeText={(text) => setRideDetails({ ...rideDetails, startPoint: text })}
+        style={styles.input}
+        mode="outlined"
+      />
       <TextInput
         label="Destination"
         value={rideDetails.destination}
@@ -110,27 +175,47 @@ const RideShareScreen = ({ navigation }) => {
         style={styles.slider}
       />
       <Button mode="outlined" onPress={() => setShowDatePicker(true)} style={styles.button}>
-        Select Date
+        Select Date Range
       </Button>
       {showDatePicker && (
-        <DateTimePicker
-          value={rideDetails.date}
-          mode="date"
-          display="default"
-          onChange={handleDateChange}
-          onClose={() => setShowDatePicker(false)}
+        <DatePickerModal
+          mode="range"
+          visible={showDatePicker}
+          onDismiss={() => setShowDatePicker(false)}
+          startDate={rideDetails.startDate}
+          endDate={rideDetails.endDate}
+          onConfirm={handleDateChange}
         />
       )}
+      {rideDetails.startDate && rideDetails.endDate && (
+        <Text style={styles.label}>Selected Dates: {rideDetails.startDate.toDateString()} - {rideDetails.endDate.toDateString()}</Text>
+      )}
+      <TextInput
+        label="Description"
+        value={rideDetails.description}
+        onChangeText={(text) => setRideDetails({ ...rideDetails, description: text })}
+        style={styles.input}
+        mode="outlined"
+        multiline
+        numberOfLines={4}
+      />
+      <View style={styles.checkboxContainer}>
+        <Checkbox
+          status={rideDetails.isTaxi ? 'checked' : 'unchecked'}
+          onPress={() => setRideDetails({ ...rideDetails, isTaxi: !rideDetails.isTaxi })}
+        />
+        <Text style={styles.checkboxLabel}>Taxi</Text>
+      </View>
       <Button mode="contained" onPress={handleShare} style={styles.button}>
         Share Ride
       </Button>
-    </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
@@ -162,6 +247,15 @@ const styles = StyleSheet.create({
   button: {
     width: '80%',
     marginBottom: 16,
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  checkboxLabel: {
+    marginLeft: 8,
+    fontSize: 16,
   },
 });
 

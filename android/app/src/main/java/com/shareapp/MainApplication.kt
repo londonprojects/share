@@ -17,8 +17,8 @@ class MainApplication : Application(), ReactApplication {
       object : DefaultReactNativeHost(this) {
         override fun getPackages(): List<ReactPackage> =
             PackageList(this).packages.apply {
-              // Packages that cannot be autolinked yet can be added manually here, for example:
-              // add(MyReactNativePackage())
+              // Remove this line if it's already being auto-linked
+              // add(ReactNativeFirebaseStoragePackage())
             }
 
         override fun getJSMainModuleName(): String = "index"
