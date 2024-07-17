@@ -29,7 +29,7 @@ const CustomAppBar = ({ navigation, userProfilePhoto }) => {
 
       <View style={styles.iconContainer}>
         <IconButton
-          icon="comment-outline"
+          icon="comment-text-multiple-outline"
           size={30}
           onPress={() => navigation.navigate('Messenger', { userId: 'exampleUserId' })}
         />

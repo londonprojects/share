@@ -90,7 +90,7 @@ const CustomTabBar = ({ navigation }) => {
       </TouchableOpacity>
       <TouchableOpacity onPress={() => handleTabPress('Experiences')} style={getTabStyle('Experiences')}>
         <View style={styles.iconContainer}>
-          <MaterialCommunityIcons name="run" size={24} color={getIconColor('Experiences')} style={styles.icon} />
+          <MaterialCommunityIcons name="ticket" size={24} color={getIconColor('Experiences')} style={styles.icon} />
           {experiencesMessages > 0 && <Badge style={styles.badge}>{experiencesMessages}</Badge>}
         </View>
         <Text style={[styles.label, selectedTab === 'Experiences' && styles.selectedLabel]}>Experiences</Text>

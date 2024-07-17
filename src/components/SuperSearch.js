@@ -1,7 +1,8 @@
-// SuperSearch.js
+// components/SuperSearch.js
+
 import React, { useState } from 'react';
 import { View, StyleSheet, Modal, ScrollView, TouchableOpacity } from 'react-native';
-import { Button, Text, TextInput, Avatar, useTheme } from 'react-native-paper';
+import { Button, Text, TextInput } from 'react-native-paper';
 
 const categories = ['Rides', 'Airbnbs', 'Items', 'Experiences'];
 
@@ -23,7 +24,7 @@ const SuperSearch = ({ visible, onClose, onSearch }) => {
       <ScrollView contentContainerStyle={styles.modalContainer}>
         <Text style={styles.heading}>Where to?</Text>
         <TextInput
-          label="Search destinations"
+          label="Location"
           value={searchCriteria.location}
           onChangeText={(text) => setSearchCriteria({ ...searchCriteria, location: text })}
           style={styles.input}

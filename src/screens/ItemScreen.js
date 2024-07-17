@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Button as RNButton, Alert } from 'react-native';
-import { Button, Text, TextInput, useTheme, Checkbox } from 'react-native-paper';
+import { View, StyleSheet, Alert } from 'react-native';
+import { Button, Text, TextInput, useTheme } from 'react-native-paper';
 import { firestore, auth } from '../services/firebase';
 
 const ItemShare = ({ navigation }) => {
@@ -21,7 +21,7 @@ const ItemShare = ({ navigation }) => {
     }
 
     try {
-      await firestore.collection('items').add({
+      const itemRef = await firestore.collection('items').add({
         name: itemName,
         description: itemDescription,
         price: itemPrice,
@@ -30,6 +30,18 @@ const ItemShare = ({ navigation }) => {
         userPhoto: currentUser.photoURL,
         dateListed: new Date(),
       });
+
+      await firestore.collection('notifications').add({
+        itemId: itemRef.id,
+        itemName: itemName,
+        userId: currentUser.uid,
+        userName: currentUser.displayName,
+        type: 'item_shared',
+        message: `${currentUser.displayName} has shared a new item: ${itemName}`,
+        read: false,
+        createdAt: new Date(),
+      });
+
       Alert.alert('Success', 'Item shared successfully!');
       navigation.goBack();
     } catch (error) {

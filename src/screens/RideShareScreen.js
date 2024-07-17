@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Alert, Platform, Image, ScrollView } from 'react-native';
-import { Text, TextInput, Button, useTheme, Avatar, Checkbox } from 'react-native-paper';
+import { Text, TextInput, Button, useTheme, Avatar, Checkbox, RadioButton } from 'react-native-paper';
 import { DatePickerModal } from 'react-native-paper-dates';
 import Slider from '@react-native-community/slider';
 import axios from 'axios';
@@ -18,7 +18,7 @@ const RideShareScreen = ({ navigation }) => {
     location: { latitude: null, longitude: null },
     description: '',
     startPoint: '',
-    isTaxi: false,
+    vehicleType: 'Private Car', // New field for vehicle type
     imageUrl: ''
   });
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -111,7 +111,7 @@ const RideShareScreen = ({ navigation }) => {
       return;
     }
 
-    const imageUrl = await fetchUnsplashImage(rideDetails.destination);
+    const imageUrl = await fetchUnsplashImage(rideDetails.startPoint);
 
     const user = auth.currentUser;
     if (user) {
@@ -140,6 +140,11 @@ const RideShareScreen = ({ navigation }) => {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
+      {rideDetails.imageUrl ? (
+        <Image source={{ uri: rideDetails.imageUrl }} style={styles.backgroundImage} />
+      ) : (
+        <Image source={{ uri: 'https://example.com/default-driving-image.jpg' }} style={styles.backgroundImage} />
+      )}
       <Avatar.Icon size={80} icon="car" style={styles.avatar} />
       <Text style={[styles.title, { color: colors.primary }]}>Share a Ride</Text>
       <TextInput
@@ -148,6 +153,10 @@ const RideShareScreen = ({ navigation }) => {
         onChangeText={(text) => setRideDetails({ ...rideDetails, startPoint: text })}
         style={styles.input}
         mode="outlined"
+        onBlur={async () => {
+          const imageUrl = await fetchUnsplashImage(rideDetails.startPoint);
+          setRideDetails({ ...rideDetails, imageUrl });
+        }}
       />
       <TextInput
         label="Destination"
@@ -200,11 +209,24 @@ const RideShareScreen = ({ navigation }) => {
         numberOfLines={4}
       />
       <View style={styles.checkboxContainer}>
-        <Checkbox
-          status={rideDetails.isTaxi ? 'checked' : 'unchecked'}
-          onPress={() => setRideDetails({ ...rideDetails, isTaxi: !rideDetails.isTaxi })}
+        <RadioButton
+          value="Taxi"
+          status={rideDetails.vehicleType === 'Taxi' ? 'checked' : 'unchecked'}
+          onPress={() => setRideDetails({ ...rideDetails, vehicleType: 'Taxi' })}
         />
         <Text style={styles.checkboxLabel}>Taxi</Text>
+        <RadioButton
+          value="Rental Car"
+          status={rideDetails.vehicleType === 'Rental Car' ? 'checked' : 'unchecked'}
+          onPress={() => setRideDetails({ ...rideDetails, vehicleType: 'Rental Car' })}
+        />
+        <Text style={styles.checkboxLabel}>Rental Car</Text>
+        <RadioButton
+          value="Private Car"
+          status={rideDetails.vehicleType === 'Private Car' ? 'checked' : 'unchecked'}
+          onPress={() => setRideDetails({ ...rideDetails, vehicleType: 'Private Car' })}
+        />
+        <Text style={styles.checkboxLabel}>Private Car</Text>
       </View>
       <Button mode="contained" onPress={handleShare} style={styles.button}>
         Share Ride
@@ -220,6 +242,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
     backgroundColor: '#F5F5F5',
+  },
+  backgroundImage: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+    opacity: 0.3,
   },
   avatar: {
     backgroundColor: '#6200EE',
@@ -255,6 +284,7 @@ const styles = StyleSheet.create({
   },
   checkboxLabel: {
     marginLeft: 8,
+    marginRight: 16,
     fontSize: 16,
   },
 });
