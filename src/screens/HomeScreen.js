@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { View, StyleSheet, ScrollView, Alert, Image, RefreshControl } from 'react-native';
 import { Provider as PaperProvider, Searchbar, FAB, Avatar, useTheme, Text } from 'react-native-paper';
 import { firestore, auth } from '../services/firebase';
@@ -7,7 +7,6 @@ import UserList from '../components/UserList';
 import ListingCard from '../components/ListingCard';
 import MapSection from '../components/MapSection';
 import TabsComponent from '../components/TabsComponent';
-import MatchingItinerariesComponent from '../components/MatchingItinerariesComponent';
 import theme from '../../theme';
 import logger from '../services/logger';
 
@@ -15,6 +14,8 @@ const DEFAULT_IMAGE = 'https://plus.unsplash.com/premium_photo-1683800241997-a38
 const NO_ITEMS_IMAGE = 'https://via.placeholder.com/300x200.png?text=No+Items+Shared';
 
 const HomeScreen = ({ navigation }) => {
+  console.log('HomeScreen rendered');
+
   const [latestListings, setLatestListings] = useState([]);
   const [recentUsers, setRecentUsers] = useState([]);
   const [query, setQuery] = useState('');
@@ -25,6 +26,7 @@ const HomeScreen = ({ navigation }) => {
   const currentUser = auth.currentUser;
   const { colors } = useTheme();
   const [listings, setListings] = useState([]);
+  const [activeTab, setActiveTab] = useState(0);
 
   const fetchListings = async () => {
     // Your logic to fetch listings from Firestore
@@ -37,12 +39,14 @@ const HomeScreen = ({ navigation }) => {
   }, []);
 
   useEffect(() => {
+    console.log('HomeScreen useEffect triggered');
     fetchUserProfile();
     fetchRecentUsers();
     fetchLatestListings();
   }, [currentUser]);
 
   const fetchUserProfile = async () => {
+    console.log('Fetching user profile');
     try {
       if (currentUser) {
         setUserProfilePhoto(currentUser.photoURL);
@@ -57,9 +61,9 @@ const HomeScreen = ({ navigation }) => {
     const data = { id: doc.id, ...doc.data() };
     try {
       const imageUrl = await getRandomImage(query);
-      data.imageUrl = imageUrl || DEFAULT_IMAGE;
+      data.imageUrl = imageUrl;
     } catch (error) {
-      logger.error('Error fetching image from Unsplash:', error);
+      console.warn('Error setting image for listing:', error.message);
       data.imageUrl = DEFAULT_IMAGE;
     }
     return data;
@@ -82,7 +86,7 @@ const HomeScreen = ({ navigation }) => {
     }
   };
 
-  const fetchLatestListings = async () => {
+  const fetchLatestListings = async (retryCount = 3) => {
     try {
       logger.debug('Fetching latest listings from Firestore...');
       const collections = ['rides', 'airbnbs', 'items', 'experiences'];
@@ -102,6 +106,12 @@ const HomeScreen = ({ navigation }) => {
       logger.info('Fetched latest listings:', listings);
     } catch (error) {
       logger.error('Error fetching latest listings:', error);
+      if (retryCount > 0) {
+        logger.info(`Retrying... (${retryCount} attempts left)`);
+        setTimeout(() => fetchLatestListings(retryCount - 1), 1000);
+      } else {
+        logger.error('Failed to fetch latest listings after multiple attempts');
+      }
     }
   };
 
@@ -152,9 +162,17 @@ const HomeScreen = ({ navigation }) => {
   // ];
 
   const getRandomImage = async (query) => {
-    const response = await fetch(`https://api.unsplash.com/photos/random?query=${query}&client_id=YOUR_ACCESS_KEY`);
-    const data = await response.json();
-    return data.urls.regular; // Return the URL of the image
+    try {
+      const response = await fetch(`https://api.unsplash.com/photos/random?query=${query}&client_id=9tdu1sdQdRJV4zwTDqLsSxT9-yJbuud6msoTTMAu_Lg`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      return data.urls.regular;
+    } catch (error) {
+      console.warn('Error fetching image from Unsplash:', error.message);
+      return DEFAULT_IMAGE; // Return a default image URL instead of null
+    }
   };
 
   const renderImage = (imageUrl) => {
@@ -164,6 +182,13 @@ const HomeScreen = ({ navigation }) => {
       return <Text>No image available</Text>; // Fallback if no image URL
     }
   };
+
+  const handleSetActiveTab = useCallback((index) => {
+    console.log('Setting active tab:', index);
+    setActiveTab(index);
+  }, []);
+
+  console.log('Before rendering TabsComponent. activeTab:', activeTab, 'handleSetActiveTab:', typeof handleSetActiveTab);
 
   return (
     <PaperProvider theme={theme}>
@@ -179,17 +204,9 @@ const HomeScreen = ({ navigation }) => {
           contentContainerStyle={styles.scrollView}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         >
-          {/* <UserList recentUsers={recentUsers} title="Latest Travelers" /> */}
           <UserList recentUsers={recentUsers} title="Recent Users" navigation={navigation} />
-          {/* {recentUsers.map(user => (
-            <View key={user.id} style={styles.recentUserContainer}>
-              {renderAvatar(user)}
-              <Text style={styles.userName}>{user.displayName}</Text>
-            </View>
-          ))} */}
           <Text style={styles.subtitle}>Sharing around me</Text>
           <MapSection />
-          {/* <MatchingItinerariesComponent navigation={navigation} /> */}
           <Text style={styles.subtitle}>Latest Listings</Text>
           {latestListings.length > 0 ? (
             latestListings.map(listing => (
@@ -210,7 +227,11 @@ const HomeScreen = ({ navigation }) => {
             </View>
           )}
         </ScrollView>
-        <TabsComponent navigation={navigation} />
+        <TabsComponent 
+          navigation={navigation} 
+          activeTab={activeTab} 
+          setActiveTab={handleSetActiveTab} 
+        />
         <FAB.Group
           open={fabOpen}
           icon={fabOpen ? 'close' : 'plus'}
@@ -235,7 +256,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8f9fa',
   },
   scrollView: {
-    // paddingVertical: 20,
+    paddingBottom: 60, // Add some bottom padding to account for the TabsComponent
   },
   searchbar: {
     margin: 16,
@@ -277,10 +298,8 @@ const styles = StyleSheet.create({
   fab: {
     position: 'absolute',
     margin: 16,
-    width: 250,
-    left: '25%',
-    bottom: 0,
-    transform: [{ translateX: -120 }], // Adjust based on the FAB size
+    right: 0,
+    bottom: 60, // Adjust this value to position the FAB above the TabsComponent
   },
 });
 

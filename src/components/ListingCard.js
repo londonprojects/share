@@ -3,7 +3,9 @@ import { View, StyleSheet, Alert } from 'react-native';
 import { Card, Text, IconButton, Button, Avatar, Modal, Portal, TextInput, useTheme } from 'react-native-paper';
 import { firestore } from '../services/firebase';
 
-const ListingCard = ({ listing, currentUser, userProfilePhoto, navigation, notifyOwner, refreshListings }) => {
+const ListingCard = ({ listing, ...otherProps }) => {
+  const imageSource = listing.imageUrl ? { uri: listing.imageUrl } : require('../assets/cesar-wild-4ixuPGkdcaQ-unsplash.jpg');
+
   const [modalVisible, setModalVisible] = useState(false);
   const [editingListing, setEditingListing] = useState(listing);
   const { colors } = useTheme();
@@ -47,7 +49,7 @@ const ListingCard = ({ listing, currentUser, userProfilePhoto, navigation, notif
       await firestore.collection(collectionName).doc(listing.id).update(editingListing);
       setModalVisible(false);
       Alert.alert('Success', 'Listing updated successfully!');
-      refreshListings(); // Refresh listings after edit
+      otherProps.refreshListings(); // Refresh listings after edit
     } catch (error) {
       console.error('Error updating listing:', error);
       Alert.alert('Error', 'Failed to update listing.');
@@ -60,7 +62,7 @@ const ListingCard = ({ listing, currentUser, userProfilePhoto, navigation, notif
       console.log(`Attempting to delete from collection: ${collectionName}, Listing ID: ${listing.id}`);
       await firestore.collection(collectionName).doc(listing.id).delete();
       Alert.alert('Success', 'Listing deleted successfully!');
-      refreshListings(); // Refresh listings after delete
+      otherProps.refreshListings(); // Refresh listings after delete
     } catch (error) {
       console.error('Error deleting listing:', error);
       Alert.alert('Error', 'Failed to delete listing.');
@@ -102,12 +104,12 @@ const ListingCard = ({ listing, currentUser, userProfilePhoto, navigation, notif
 
   return (
     <Card style={styles.card}>
-      <Card.Cover source={{ uri: listing.imageUrl || 'https://via.placeholder.com/150' }} style={styles.cardImage} />
+      <Card.Cover source={imageSource} style={styles.cardImage} />
       <Card.Content>
         <View style={styles.cardHeader}>
           <Avatar.Image 
             size={40} 
-            source={{ uri: listing.userPhoto || userProfilePhoto || 'https://via.placeholder.com/150' }} 
+            source={{ uri: listing.userPhoto || otherProps.userProfilePhoto || 'https://via.placeholder.com/150' }} 
             style={styles.userPhoto} 
           />
           <View style={styles.headerText}>
@@ -138,19 +140,19 @@ const ListingCard = ({ listing, currentUser, userProfilePhoto, navigation, notif
       <Card.Actions style={styles.cardActions}>
         <Button 
           mode="text" 
-          onPress={() => navigation.navigate(getListingTypeScreen(listing.type))}
+          onPress={() => otherProps.navigation.navigate(getListingTypeScreen(listing.type))}
           style={styles.viewAllButton}
         >
           View All
         </Button>
         {listing.isTaxi && <IconButton icon="taxi" size={20} style={styles.taxiIcon} />}
-        {listing.userId === currentUser?.uid ? (
+        {listing.userId === otherProps.currentUser?.uid ? (
           <>
             <IconButton icon="pencil" onPress={handleEdit} />
             <IconButton icon="delete" onPress={handleDelete} />
           </>
         ) : (
-          <IconButton icon="thumb-up" onPress={() => notifyOwner(listing.userId, listing.id)} />
+          <IconButton icon="thumb-up" onPress={() => otherProps.notifyOwner(listing.userId, listing.id)} />
         )}
       </Card.Actions>
       {renderEditModal()}

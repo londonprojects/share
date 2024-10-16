@@ -213,27 +213,29 @@ const ProfileScreen = ({ navigation }) => {
         Logout
       </Button>
       <Divider />
-      <Text style={styles.supportTitle}>Support</Text>
-      <List.Item
-        title="How it Works"
-        left={props => <List.Icon {...props} icon="information" />}
-        onPress={() => Alert.alert('How it Works', 'This section explains how the app works.')}
-      />
-      <List.Item
-        title="Give Us Feedback"
-        left={props => <List.Icon {...props} icon="message" />}
-        onPress={() => Alert.alert('Give Us Feedback', 'This section allows you to provide feedback.')}
-      />
-      <List.Item
-        title="Report a Concern"
-        left={props => <List.Icon {...props} icon="alert" />}
-        onPress={() => Alert.alert('Report a Concern', 'This section allows you to report a concern.')}
-      />
-      <List.Item
-        title="Visit the Help Centre"
-        left={props => <List.Icon {...props} icon="help-circle" />}
-        onPress={() => Alert.alert('Visit the Help Centre', 'This section directs you to the help centre.')}
-      />
+      <List.Section>
+        <List.Subheader>Support</List.Subheader>
+        <List.Item
+          title="How it Works"
+          left={props => <List.Icon {...props} icon="information" />}
+          onPress={() => navigation.navigate('HowItWorks')}
+        />
+        <List.Item
+          title="Give Us Feedback"
+          left={props => <List.Icon {...props} icon="message" />}
+          onPress={() => navigation.navigate('Feedback')}
+        />
+        <List.Item
+          title="Report a Concern"
+          left={props => <List.Icon {...props} icon="alert" />}
+          onPress={() => navigation.navigate('ReportConcern')}
+        />
+        <List.Item
+          title="Visit the Help Centre"
+          left={props => <List.Icon {...props} icon="help-circle" />}
+          onPress={() => navigation.navigate('HelpCentre')}
+        />
+      </List.Section>
     </ScrollView>
   );
 };
@@ -281,11 +283,6 @@ const styles = StyleSheet.create({
   },
   button: {
     marginVertical: 8,
-  },
-  supportTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginVertical: 16,
   },
 });
 

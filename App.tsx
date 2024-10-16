@@ -43,6 +43,10 @@ import MessagesDetailsScreen from './src/screens/MessageDetailScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import UserProfileScreen from './src/screens/UserProfileScreen';
 import NotificationsScreen from './src/screens/NotificationsScreen';
+import HowItWorksScreen from './src/screens/HowItWorksScreen';
+import FeedbackScreen from './src/screens/FeedbackScreen';
+import ReportConcernScreen from './src/screens/ReportConcernScreen';
+import HelpCentreScreen from './src/screens/HelpCentreScreen';
 
 const addDummyData = async () => {
   const dummyUsers = [
@@ -166,6 +170,10 @@ const App = () => {
             <Stack.Screen name="UserProfile" component={UserProfileScreen} />
             <Stack.Screen name="AirbnbScreen" component={AirbnbScreen} options={{ headerShown: false }} />
             <Stack.Screen name="Notifications" component={NotificationsScreen} />
+            <Stack.Screen name="HowItWorks" component={HowItWorksScreen} />
+            <Stack.Screen name="Feedback" component={FeedbackScreen} />
+            <Stack.Screen name="ReportConcern" component={ReportConcernScreen} />
+            <Stack.Screen name="HelpCentre" component={HelpCentreScreen} />
           </Stack.Navigator>
         {/* </StackGestureRefContext.Provider> */}
       {/* </GestureHandlerRootView> */}
