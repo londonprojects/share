@@ -6,6 +6,8 @@ import { Provider as PaperProvider, DefaultTheme } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { enableScreens } from 'react-native-screens';
 import HitchhikeRequestScreen from './src/screens/HitchhikeRequestScreen';
+// import { GestureHandlerRootView } from 'react-native-gesture-handler';
+// import StackGestureRefContext from './GestureHandlerRefContext';
 import theme from './theme';
 
 enableScreens();
@@ -78,6 +80,7 @@ const addDummyData = async () => {
 };
 
 const App = () => {
+  const gestureHandlerRef = React.useRef();
   useEffect(() => {
     // Check if the dummy data needs to be added
     const addDataIfNeeded = async () => {
@@ -104,6 +107,8 @@ const App = () => {
     <PaperProvider theme={theme}>
       <SafeAreaProvider>
         <NavigationContainer>
+        {/* <GestureHandlerRootView> */}
+        {/* <StackGestureRefContext.Provider value={gestureHandlerRef}> */}
           <Stack.Navigator initialRouteName="Auth">
           <Stack.Screen 
             name="Auth" 
@@ -162,8 +167,10 @@ const App = () => {
             <Stack.Screen name="AirbnbScreen" component={AirbnbScreen} options={{ headerShown: false }} />
             <Stack.Screen name="Notifications" component={NotificationsScreen} />
           </Stack.Navigator>
+        {/* </StackGestureRefContext.Provider> */}
+      {/* </GestureHandlerRootView> */}
         </NavigationContainer>
-      </SafeAreaProvider>
+        </SafeAreaProvider>
     </PaperProvider>
   );
 };

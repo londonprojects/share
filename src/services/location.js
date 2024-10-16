@@ -1,5 +1,6 @@
 import Geolocation from '@react-native-community/geolocation';
 import { firestore, auth } from './firebase';
+import { GeoPoint } from 'firebase/firestore';
 
 export const updateUserLocation = () => {
   Geolocation.getCurrentPosition(
@@ -8,7 +9,7 @@ export const updateUserLocation = () => {
       const user = auth.currentUser;
       if (user) {
         firestore.collection('users').doc(user.uid).update({
-          location: new firestore.GeoPoint(latitude, longitude),
+          location: new GeoPoint(latitude, longitude),
         });
       }
     },

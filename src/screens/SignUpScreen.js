@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ImageBackground, TextInput, TouchableOpacity, Text } from 'react-native';
+import { View, StyleSheet, ImageBackground, TextInput, TouchableOpacity, Text, Alert } from 'react-native';
 import { Button } from 'react-native-paper';
 import { auth, firestore } from '../services/firebase';
 
@@ -39,7 +39,18 @@ const SignUpScreen = ({ navigation }) => {
       // Navigate to home screen after successful signup
       navigation.navigate('Home');
     } catch (error) {
-      alert(error.message);
+      let errorMessage = 'Sign up failed. Please try again.';
+
+      // Check for specific error codes
+      if (error.code === 'auth/email-already-in-use') {
+        errorMessage = 'This email is already in use. Please try logging in or use a different email.';
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'Please enter a valid email address.';
+      } else if (error.code === 'auth/weak-password') {
+        errorMessage = 'The password is too weak. Please choose a stronger password.';
+      }
+
+      Alert.alert('Error', errorMessage); // Display the friendly error message
     }
   };
 

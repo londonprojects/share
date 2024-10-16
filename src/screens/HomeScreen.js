@@ -151,6 +151,20 @@ const HomeScreen = ({ navigation }) => {
   //   // Add more users as needed
   // ];
 
+  const getRandomImage = async (query) => {
+    const response = await fetch(`https://api.unsplash.com/photos/random?query=${query}&client_id=YOUR_ACCESS_KEY`);
+    const data = await response.json();
+    return data.urls.regular; // Return the URL of the image
+  };
+
+  const renderImage = (imageUrl) => {
+    if (imageUrl) {
+      return <Image source={{ uri: imageUrl }} style={styles.image} />;
+    } else {
+      return <Text>No image available</Text>; // Fallback if no image URL
+    }
+  };
+
   return (
     <PaperProvider theme={theme}>
       <View style={styles.container}>
@@ -264,7 +278,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     margin: 16,
     width: 250,
-    left: '50%',
+    left: '25%',
     bottom: 0,
     transform: [{ translateX: -120 }], // Adjust based on the FAB size
   },

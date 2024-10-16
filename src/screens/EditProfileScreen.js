@@ -3,7 +3,7 @@ import { View, StyleSheet, Alert } from 'react-native';
 import { Text, TextInput, Button, Avatar } from 'react-native-paper';
 import { auth, firestore } from '../services/firebase';
 import ImagePicker from 'react-native-image-crop-picker';
-import storage from '@react-native-firebase/storage';  // Import storage
+// import storage from '@react-native-firebase/storage';  // Import storage
 
 const EditProfileScreen = ({ navigation }) => {
   const [profile, setProfile] = useState({

@@ -21,8 +21,8 @@ android {
         applicationId "com.currentlyremote.shareapp"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 2
-        versionName "1.0.1"
+        versionCode 4
+        versionName "0.0.1"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -73,7 +73,7 @@ react {
 
 dependencies {
     // Import the Firebase BoM
-    implementation platform('com.google.firebase:firebase-bom:33.1.1')
+    implementation platform('com.google.firebase:firebase-bom:33.3.0')
 
     // Add the dependencies for Firebase products you want to use
     implementation 'com.google.firebase:firebase-analytics'
@@ -82,12 +82,12 @@ dependencies {
     implementation 'com.google.firebase:firebase-storage'
 
     // Example other dependencies
-    implementation 'androidx.appcompat:appcompat:1.3.1'
-    implementation 'com.google.android.material:material:1.4.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.0'
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'com.google.android.material:material:1.12.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.3'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
+    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'
 
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
