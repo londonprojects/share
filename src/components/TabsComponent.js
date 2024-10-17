@@ -1,57 +1,66 @@
 import React from 'react';
 import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { Badge } from 'react-native-paper';
 
-const CustomTabBar = ({ navigation, activeTab, setActiveTab }) => {
-  console.log('CustomTabBar rendered. Props:', { navigation, activeTab, setActiveTab: typeof setActiveTab });
-
-  const tabs = [
-    { name: 'RidesScreen', label: 'Rides', icon: 'car' },
-    { name: 'AirbnbScreen', label: 'Airbnbs', icon: 'home' },
-    { name: 'ItemShareScreen', label: 'Items', icon: 'gift' },
-    { name: 'ExperienceShareScreen', label: 'Experiences', icon: 'ticket' },
-  ];
-
-  const handleTabPress = (index) => {
-    console.log('Tab pressed:', index);
-    if (typeof setActiveTab === 'function') {
-      setActiveTab(index);
-    } else {
-      console.error('setActiveTab is not a function:', setActiveTab);
-    }
-    navigation.navigate(tabs[index].name);
-  };
-
-  const getTabStyle = (index) => {
-    return activeTab === index ? styles.selectedTab : styles.tab;
-  };
-
-  const getIconColor = (index) => {
-    return activeTab === index ? '#6200ea' : '#000';
-  };
+const CustomTabBar = ({ state, navigation, activeTab, setActiveTab }) => {
+  if (!state || !state.routes) {
+    return null; // or return a placeholder component
+  }
 
   return (
     <View style={styles.container}>
-      {tabs.map((tab, index) => (
-        <TouchableOpacity
-          key={tab.name}
-          onPress={() => handleTabPress(index)}
-          style={getTabStyle(index)}
-        >
-          <View style={styles.iconContainer}>
-            <MaterialCommunityIcons
-              name={tab.icon}
-              size={24}
-              color={getIconColor(index)}
-              style={styles.icon}
-            />
-          </View>
-          <Text style={[styles.label, activeTab === index && styles.selectedLabel]}>
-            {tab.label}
-          </Text>
-        </TouchableOpacity>
-      ))}
+      {state.routes.map((route, index) => {
+        const label = route.name;
+        const isFocused = state.index === index;
+
+        const onPress = () => {
+          if (!isFocused) {
+            setActiveTab(index);
+            navigation.navigate(route.name);
+          }
+        };
+
+        const getIconName = () => {
+          switch (route.name) {
+            case 'Home':
+              return 'home';
+            case 'Rides':
+              return 'car';
+            case 'Airbnb':
+              return 'home-city';
+            case 'Items':
+              return 'gift';
+            case 'Experiences':
+              return 'ticket';
+            default:
+              return 'circle';
+          }
+        };
+
+        return (
+          <TouchableOpacity
+            key={route.key}
+            accessibilityRole="button"
+            accessibilityState={isFocused ? { selected: true } : {}}
+            accessibilityLabel={`${label} tab`}
+            testID={`${label}-tab`}
+            onPress={onPress}
+            style={isFocused ? styles.selectedTab : styles.tab}
+          >
+            <View style={styles.iconContainer}>
+              <MaterialCommunityIcons
+                name={getIconName()}
+                size={24}
+                color={isFocused ? '#6200ea' : '#000'}
+                style={styles.icon}
+              />
+            </View>
+            <Text style={[styles.label, isFocused && styles.selectedLabel]}>
+              {label}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
     </View>
   );
 };

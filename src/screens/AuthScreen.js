@@ -3,6 +3,7 @@ import { View, StyleSheet, ImageBackground, TextInput, TouchableOpacity, Text } 
 import { Button, IconButton } from 'react-native-paper';
 import CheckBox from '@react-native-community/checkbox';
 import { auth } from '../services/firebase'; // Make sure to import your firebase configuration
+import { validateEmail, validatePassword } from '../utils/validation'; // Assume we have these utility functions
 
 const AuthScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -10,20 +11,29 @@ const AuthScreen = ({ navigation }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [remindMe, setRemindMe] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
 
   const handleLogin = async () => {
-    const trimmedEmail = email.replace(/\s+/g, ''); // Remove all spaces from the email
+    const trimmedEmail = email.trim();
     const trimmedPassword = password.trim();
 
-    if (!trimmedEmail || !trimmedPassword) {
-      setErrorMessage('Please fill in both email and password.');
+    // Reset error states
+    setEmailError('');
+    setPasswordError('');
+    setErrorMessage('');
+
+    // Validate email
+    const emailValidationResult = validateEmail(trimmedEmail);
+    if (!emailValidationResult.isValid) {
+      setEmailError(emailValidationResult.error);
       return;
     }
 
-    // Basic email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(trimmedEmail)) {
-      setErrorMessage('Please enter a valid email address.');
+    // Validate password
+    const passwordValidationResult = validatePassword(trimmedPassword);
+    if (!passwordValidationResult.isValid) {
+      setPasswordError(passwordValidationResult.error);
       return;
     }
 
@@ -53,17 +63,24 @@ const AuthScreen = ({ navigation }) => {
         <TextInput
           placeholder="Email"
           placeholderTextColor="#ffffff"
-          style={styles.input}
+          style={[styles.input, emailError && styles.inputError]}
           value={email}
-          onChangeText={setEmail}
+          onChangeText={(text) => {
+            setEmail(text);
+            setEmailError('');
+          }}
         />
-        <View style={styles.passwordContainer}>
+        {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
+        <View style={[styles.passwordContainer, passwordError && styles.inputError]}>
           <TextInput
             placeholder="Password"
             placeholderTextColor="#ffffff"
             style={styles.passwordInput}
             value={password}
-            onChangeText={setPassword}
+            onChangeText={(text) => {
+              setPassword(text);
+              setPasswordError('');
+            }}
             secureTextEntry={!showPassword}
           />
           <IconButton
@@ -73,6 +90,7 @@ const AuthScreen = ({ navigation }) => {
             style={styles.eyeIcon}
           />
         </View>
+        {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
         <View style={styles.remindMeContainer}>
           <CheckBox
             value={remindMe}
@@ -125,6 +143,10 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     paddingHorizontal: 10,
     color: '#ffffff',
+  },
+  inputError: {
+    borderColor: 'red',
+    borderWidth: 1,
   },
   passwordContainer: {
     flexDirection: 'row',

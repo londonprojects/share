@@ -9,6 +9,7 @@ import HitchhikeRequestScreen from './src/screens/HitchhikeRequestScreen';
 // import { GestureHandlerRootView } from 'react-native-gesture-handler';
 // import StackGestureRefContext from './GestureHandlerRefContext';
 import theme from './theme';
+import CustomTabBar from './src/components/TabsComponent';
 
 enableScreens();
 
@@ -145,7 +146,7 @@ const App = () => {
             <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} options={{ headerShown: false }} />
             <Stack.Screen name="ItemShareScreen" component={ItemShareScreen} options={{ headerShown: false }} />
             <Stack.Screen name="ItemShare" component={ItemShare} />
-            <Stack.Screen name="ExperienceShareScreen" component={ExperienceShareScreen} />
+            <Stack.Screen name="ExperienceShareScreen" component={ExperienceShareScreen} options={{ headerShown: false }} />
             <Stack.Screen name="ExperienceShare" component={ExperienceShare} options={{ headerShown: false }} />
             <Stack.Screen name="Schedule" component={ScheduleScreen} />
             <Stack.Screen 

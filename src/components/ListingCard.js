@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet, Alert } from 'react-native';
 import { Card, Text, IconButton, Button, Avatar, Modal, Portal, TextInput, useTheme } from 'react-native-paper';
 import { firestore } from '../services/firebase';
+import { useNavigation } from '@react-navigation/native';
 
 const ListingCard = ({ listing, ...otherProps }) => {
   const imageSource = listing.imageUrl ? { uri: listing.imageUrl } : require('../assets/cesar-wild-4ixuPGkdcaQ-unsplash.jpg');
@@ -9,6 +10,7 @@ const ListingCard = ({ listing, ...otherProps }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [editingListing, setEditingListing] = useState(listing);
   const { colors } = useTheme();
+  const navigation = useNavigation();
 
   const formatDate = (timestamp) => {
     if (timestamp && timestamp.seconds) {
@@ -25,17 +27,11 @@ const ListingCard = ({ listing, ...otherProps }) => {
   };
 
   const getListingTypeScreen = (type) => {
-    switch (type) {
-      case 'Ride':
-        return 'RidesScreen';
-      case 'Airbnb':
-        return 'AirbnbScreen';
-      case 'Item':
-        return 'ItemShareScreen';
-      case 'Experience':
-        return 'ExperienceShareScreen';
-      default:
-        return 'Home';
+    switch(type.toLowerCase()) {
+      case 'books': return 'BooksListingScreen';
+      case 'electronics': return 'ElectronicsListingScreen';
+      // Add more cases as needed
+      default: return 'DefaultListingScreen';
     }
   };
 
@@ -66,6 +62,37 @@ const ListingCard = ({ listing, ...otherProps }) => {
     } catch (error) {
       console.error('Error deleting listing:', error);
       Alert.alert('Error', 'Failed to delete listing.');
+    }
+  };
+
+  const handleViewAll = () => {
+    console.log('Listing:', listing);
+    
+    if (!listing || !listing.type) {
+      console.error('Listing or listing type is undefined');
+      Alert.alert('Error', 'Unable to view listings of this type');
+      return;
+    }
+
+    const listingType = listing.type.toLowerCase();
+    console.log('Listing type:', listingType);
+
+    const screenMapping = {
+      rides: 'RidesListingScreen',
+      airbnb: 'AirbnbListingScreen',
+      books: 'BooksListingScreen',
+      electronics: 'ElectronicsListingScreen',
+      // Add more mappings as needed
+    };
+
+    const screenName = screenMapping[listingType];
+
+    if (screenName) {
+      console.log('Navigating to:', screenName);
+      navigation.navigate(screenName);
+    } else {
+      console.error('No matching screen for listing type:', listingType);
+      Alert.alert('Error', `No view available for ${listing.type} listings`);
     }
   };
 
@@ -138,13 +165,15 @@ const ListingCard = ({ listing, ...otherProps }) => {
         </View>
       </Card.Content>
       <Card.Actions style={styles.cardActions}>
-        <Button 
-          mode="text" 
-          onPress={() => otherProps.navigation.navigate(getListingTypeScreen(listing.type))}
-          style={styles.viewAllButton}
-        >
-          View All
-        </Button>
+        {listing && listing.type && (
+          <Button 
+            mode="text" 
+            onPress={handleViewAll}
+            style={styles.viewAllButton}
+          >
+            View All {listing.type}
+          </Button>
+        )}
         {listing.isTaxi && <IconButton icon="taxi" size={20} style={styles.taxiIcon} />}
         {listing.userId === otherProps.currentUser?.uid ? (
           <>

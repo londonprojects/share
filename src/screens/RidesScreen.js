@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, FlatList, StyleSheet, Image, Alert, ScrollView, TextInput } from 'react-native';
 import { Text, Card, Searchbar, IconButton, Avatar, Badge, Button, Portal, Dialog, Paragraph, ActivityIndicator, Provider as PaperProvider, Switch } from 'react-native-paper';
 import { firestore, auth } from '../services/firebase';
 import axios from 'axios';
 import CustomAppBar from '../components/CustomAppBar';
-import TabsComponent from '../components/TabsComponent';
+import CustomTabBar from '../components/TabsComponent';
 
 const UNSPLASH_ACCESS_KEY = '9tdu1sdQdRJV4zwTDqLsSxT9-yJbuud6msoTTMAu_Lg';
 const DEFAULT_IMAGE = 'https://images.unsplash.com/photo-1716671827397-8948fb218779?q=80&w=1287&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D';
@@ -23,6 +23,7 @@ function RidesScreen({ navigation }) {
     destination: '', price: '', numPlaces: '', startDate: null, endDate: null, isTaxi: false, description: '', from: '', to: ''
   });
   const [userProfilePhoto, setUserProfilePhoto] = useState(null);
+  const [activeTab, setActiveTab] = useState(1); // Set to 1 for Rides tab
 
   useEffect(() => {
     const user = auth.currentUser;
@@ -181,6 +182,27 @@ function RidesScreen({ navigation }) {
     }
   };
 
+  const handleSetActiveTab = useCallback((index) => {
+    setActiveTab(index);
+    switch(index) {
+      case 0:
+        navigation.navigate('Home');
+        break;
+      case 1:
+        navigation.navigate('RidesScreen');
+        break;
+      case 2:
+        navigation.navigate('AirbnbScreen');
+        break;
+      case 3:
+        navigation.navigate('ItemShareScreen');
+        break;
+      case 4:
+        navigation.navigate('ExperienceShareScreen');
+        break;
+    }
+  }, [navigation]);
+
   return (
     <PaperProvider>
       <View style={styles.container}>
@@ -333,7 +355,21 @@ function RidesScreen({ navigation }) {
             </Dialog.Actions>
           </Dialog>
         </Portal>
-        <TabsComponent navigation={navigation} />
+        <CustomTabBar
+          state={{
+            index: activeTab,
+            routes: [
+              { key: 'home', name: 'Home' },
+              { key: 'rides', name: 'Rides' },
+              { key: 'airbnb', name: 'Airbnb' },
+              { key: 'items', name: 'Items' },
+              { key: 'experiences', name: 'Experiences' },
+            ]
+          }}
+          navigation={navigation}
+          activeTab={activeTab}
+          setActiveTab={handleSetActiveTab}
+        />
       </View>
     </PaperProvider>
   );

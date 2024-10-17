@@ -6,7 +6,7 @@ import CustomAppBar from '../components/CustomAppBar';
 import UserList from '../components/UserList';
 import ListingCard from '../components/ListingCard';
 import MapSection from '../components/MapSection';
-import TabsComponent from '../components/TabsComponent';
+import CustomTabBar from '../components/TabsComponent';
 import theme from '../../theme';
 import logger from '../services/logger';
 
@@ -184,11 +184,25 @@ const HomeScreen = ({ navigation }) => {
   };
 
   const handleSetActiveTab = useCallback((index) => {
-    console.log('Setting active tab:', index);
     setActiveTab(index);
-  }, []);
-
-  console.log('Before rendering TabsComponent. activeTab:', activeTab, 'handleSetActiveTab:', typeof handleSetActiveTab);
+    switch(index) {
+      case 0:
+        navigation.navigate('Home');
+        break;
+      case 1:
+        navigation.navigate('RidesScreen');
+        break;
+      case 2:
+        navigation.navigate('AirbnbScreen');
+        break;
+      case 3:
+        navigation.navigate('ItemShareScreen');
+        break;
+      case 4:
+        navigation.navigate('ExperienceShareScreen');
+        break;
+    }
+  }, [navigation]);
 
   return (
     <PaperProvider theme={theme}>
@@ -227,11 +241,6 @@ const HomeScreen = ({ navigation }) => {
             </View>
           )}
         </ScrollView>
-        <TabsComponent 
-          navigation={navigation} 
-          activeTab={activeTab} 
-          setActiveTab={handleSetActiveTab} 
-        />
         <FAB.Group
           open={fabOpen}
           icon={fabOpen ? 'close' : 'plus'}
@@ -244,6 +253,21 @@ const HomeScreen = ({ navigation }) => {
           ]}
           onStateChange={({ open }) => setFabOpen(open)}
           style={styles.fab}
+        />
+        <CustomTabBar
+          state={{
+            index: activeTab,
+            routes: [
+              { key: 'home', name: 'Home' },
+              { key: 'rides', name: 'Rides' },
+              { key: 'airbnb', name: 'Airbnb' },
+              { key: 'items', name: 'Items' },
+              { key: 'experiences', name: 'Experiences' },
+            ]
+          }}
+          navigation={navigation}
+          activeTab={activeTab}
+          setActiveTab={handleSetActiveTab}
         />
       </View>
     </PaperProvider>
@@ -299,7 +323,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     margin: 16,
     right: 0,
-    bottom: 60, // Adjust this value to position the FAB above the TabsComponent
+    bottom: 60, // Adjust this value to position FAB above the tabs
   },
 });
 
